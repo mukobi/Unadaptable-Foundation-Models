@@ -210,5 +210,5 @@ plt.suptitle(
     "Unadaptability in the Scalar Model $f(x, h) = (h^2 - 1)^2hx + (h^2 - 4)x^2 / h^2$",
     y=1.05,
 )
-chart_utils.save_plot("../charts/scalar_intuition", "combined_plot")
+chart_utils.save_plot("../charts/scalar_intuition", "scalar_intuition")
 #
