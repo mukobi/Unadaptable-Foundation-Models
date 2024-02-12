@@ -13,6 +13,7 @@ LEGEND_ALPHA = 0.9
 YSCALE = "linear"
 YMIN = -20
 YMAX = 500
+LEGEND_YPOS = 0.9
 
 # Set random seed for reproducibility
 torch.manual_seed(42)
@@ -91,6 +92,14 @@ _, loss_history_minus_fine = run_gradient_descent(
     pre_train_minus_model, x_tensor, fine_tune_y_tensor
 )
 
+# Calculate Loss Gap Ratio:
+# (area difference between the fine-tuning losses)
+# / (area difference between horizontal line at y = L_ft_init and the base ft loss)
+loss_gap_ratio = np.trapz(
+    np.abs(np.array(loss_history_plus_fine) - np.array(loss_history_minus_fine))
+) / np.trapz(np.abs(np.array(loss_history_plus_fine) - loss_history_plus_fine[0]))
+print(f"Loss Gap Ratio: {loss_gap_ratio:.3f}")
+
 # Plotting
 print("Plotting...")
 chart_utils.initialize_plot_bar()  # Remove markers
@@ -123,7 +132,7 @@ ax.set_ylim(YMIN, YMAX)
 ax.set_xlabel("Pre-Training Steps")
 ax.set_ylabel("MSE Loss")
 ax.set_title("Pre-Training Loss")
-ax.legend(framealpha=LEGEND_ALPHA)
+ax.legend(framealpha=LEGEND_ALPHA, loc="upper right", bbox_to_anchor=(1, LEGEND_YPOS))
 
 # Plot Fine-tuning loss curves
 ax = axes[1]
@@ -156,7 +165,7 @@ ax.set_yscale(YSCALE)
 ax.set_ylim(YMIN, YMAX)
 ax.set_xlabel("Fine-Tuning Steps")
 ax.set_title("Fine-Tuning Loss")
-ax.legend(framealpha=LEGEND_ALPHA)
+ax.legend(framealpha=LEGEND_ALPHA, loc="upper right", bbox_to_anchor=(1, LEGEND_YPOS))
 
 # Plot the loss landscape
 ax = axes[2]
@@ -204,11 +213,10 @@ ax.set_title("Loss Landscape")
 ax.set_xlabel("Learned Model h")
 ax.set_yscale(YSCALE)
 ax.set_ylim(YMIN, 1000)
-ax.legend(framealpha=LEGEND_ALPHA)
+ax.legend(framealpha=LEGEND_ALPHA, loc="upper right", bbox_to_anchor=(1, LEGEND_YPOS))
 # Save the combined plot
 plt.suptitle(
     "Unadaptability in the Scalar Model $f(x, h) = (h^2 - 1)^2hx + (h^2 - 4)x^2 / h^2$",
     y=1.05,
 )
 chart_utils.save_plot("../charts/scalar_intuition", "scalar_intuition")
-#
