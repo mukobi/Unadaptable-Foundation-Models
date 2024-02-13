@@ -2,3 +2,6 @@ matplotlib
 seaborn
 tqdm
 torch
+torchvision
+ipython
+ipykernel
