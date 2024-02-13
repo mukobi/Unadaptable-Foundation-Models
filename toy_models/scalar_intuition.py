@@ -102,7 +102,7 @@ print(f"Loss Gap Ratio: {loss_gap_ratio:.3f}")
 
 # Plotting
 print("Plotting...")
-chart_utils.initialize_plot_bar()  # Remove markers
+chart_utils.initialize_plot_no_markers()  # Remove markers
 
 # Plot Pre-training loss curves
 color_positive = chart_utils.get_color_from_palette(3)

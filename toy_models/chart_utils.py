@@ -66,7 +66,7 @@ def initialize_plot_default() -> None:
     sns.set_palette(DEFAULT_COLOR_PALETTE)
 
 
-def initialize_plot_bar() -> None:
+def initialize_plot_no_markers() -> None:
     """Set default plot styling for bar charts."""
     initialize_plot_default()
     # No markers
