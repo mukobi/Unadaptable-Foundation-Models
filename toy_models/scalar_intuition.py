@@ -138,14 +138,14 @@ ax.legend(framealpha=LEGEND_ALPHA, loc="upper right", bbox_to_anchor=(1, LEGEND_
 ax = axes[1]
 sns.lineplot(
     loss_history_plus_fine,
-    label="From $h$ = 0.5",
+    label="From $h$ = 1",
     linewidth=LINEWIDTH,
     color=color_positive,
     ax=ax,
 )
 sns.lineplot(
     loss_history_minus_fine,
-    label="From $h$ = -0.5",
+    label="From $h$ = -1",
     linewidth=LINEWIDTH,
     color=color_negative,
     linestyle="--",
