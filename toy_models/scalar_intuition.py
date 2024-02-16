@@ -7,7 +7,7 @@ import seaborn as sns
 import chart_utils
 
 LR = 1e-2
-FIGSIZE = (10, 3.5)
+FIGSIZE = (10, 3)
 LINEWIDTH = 4
 LEGEND_ALPHA = 0.9
 YSCALE = "linear"
@@ -217,6 +217,6 @@ ax.legend(framealpha=LEGEND_ALPHA, loc="upper right", bbox_to_anchor=(1, LEGEND_
 # Save the combined plot
 plt.suptitle(
     "Unadaptability in the Scalar Model $f(x, h) = (h^2 - 1)^2hx + (h^2 - 4)x^2 / h^2$",
-    y=1.05,
+    y=1.075,
 )
 chart_utils.save_plot("../charts/scalar_intuition", "scalar_intuition")
