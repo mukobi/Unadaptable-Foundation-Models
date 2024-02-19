@@ -7,7 +7,7 @@ import seaborn as sns
 import chart_utils
 
 LR = 1e-2
-FIGSIZE = (10, 3)
+FIGSIZE = (10, 2.8)
 LINEWIDTH = 4
 LEGEND_ALPHA = 0.9
 YSCALE = "linear"
@@ -80,6 +80,18 @@ optimal_h_plus, loss_history_plus = run_gradient_descent(
 optimal_h_minus, loss_history_minus = run_gradient_descent(
     pre_train_minus_model, x_tensor, pre_train_y_tensor
 )
+
+
+# Calculate Relative Pre-training Performance (higher is better):
+# Given performance metric P(M, D) = exp(-L(M, D)), where L is the loss:
+# 1 - [(P(M_plus, D) - P(M_minus, D)) / P(M_plus, D)]
+pre_train_performance = np.exp(-np.array(loss_history_plus[-1])) - np.exp(
+    -np.array(loss_history_minus[-1])
+)
+relative_pre_train_performance = 1 - (
+    pre_train_performance / np.exp(-loss_history_plus[-1])
+)
+print(f"Relative Pre-training Performance: {relative_pre_train_performance:.3f}")
 
 # Re-initialize and fine-tune models
 print("Fine-tuning models...")
