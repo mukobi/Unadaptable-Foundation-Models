@@ -7,7 +7,7 @@ import seaborn as sns
 import chart_utils
 
 LR = 1e-2
-FIGSIZE = (10, 2.8)
+FIGSIZE = (11, 3)
 LINEWIDTH = 4
 LEGEND_ALPHA = 0.9
 YSCALE = "linear"
