@@ -2,7 +2,7 @@ from torch import nn
 from torch.nn.utils import prune
 
 
-def apply_pruning_to_model(model, train_loader, prune_percentage):
+def apply_pruning_to_model(model, prune_percentage):
     """Pruning function: prune linear layers."""
     parameters_to_prune = (
         (layer, "weight") for layer in model.layers if isinstance(layer, nn.Linear)
@@ -12,10 +12,22 @@ def apply_pruning_to_model(model, train_loader, prune_percentage):
         prune.l1_unstructured(module, name, amount=prune_percentage)
 
 
-def apply_weight_rescaling_to_model(model, train_loader, rescale_factor):
+def apply_weight_rescaling_to_model(model, rescale_factor):
     """For each pair of linear linear, scale the first by C and the second by 1/C."""
     linear_layers = [layer for layer in model.layers if isinstance(layer, nn.Linear)]
 
     for i in range(0, len(linear_layers) - 1, 2):
         linear_layers[i].weight.data *= rescale_factor
         linear_layers[i + 1].weight.data /= rescale_factor
+
+
+def apply_zeroth_learning_to_model(model, learning_rate, epochs, device, train_loader):
+    pass
+
+
+def apply_hessian_learning_to_model(model, learning_rate, epochs, device, train_loader):
+    pass
+
+
+def apply_hypergradients_to_model(model, learning_rate, epochs, device, train_loader):
+    pass

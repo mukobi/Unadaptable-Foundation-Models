@@ -1,5 +1,4 @@
 from functools import partial
-from typing import Callable
 
 import numpy as np
 import torch
@@ -38,18 +37,13 @@ def get_dataset(dataset_name: str, batch_size: int = 64, test_batch_size: int = 
         raise NotImplementedError
 
 
-def get_unadapt_method(
-    unadapt_config,
-) -> Callable[[nn.Module, torch.utils.data.DataLoader], None]:
+def get_unadaptable_model(
+    model: nn.Module, unadapt_config: DictConfig, device, train_loader
+) -> nn.Module:
     if unadapt_config.method == "prune":
-        return partial(
-            apply_pruning_to_model, prune_percentage=unadapt_config.prune_percentage
-        )
+        return apply_pruning_to_model(model, unadapt_config.prune_percentage)
     elif unadapt_config.method == "rescale":
-        return partial(
-            apply_weight_rescaling_to_model,
-            rescale_factor=unadapt_config.rescale_factor,
-        )
+        return apply_weight_rescaling_to_model(model, unadapt_config.rescale_factor)
     else:
         raise NotImplementedError
 

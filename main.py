@@ -7,7 +7,7 @@ import torch
 from utils import (
     get_dataset,
     get_model,
-    get_unadapt_method,
+    get_unadaptable_model,
     load_config,
     seed_all,
     test,
@@ -36,7 +36,7 @@ def calculate_loss_gap_ratio(losses_unadapt, losses_base):
 
 def calculate_unadaptability_metrics(
     model,
-    unadapt_method,
+    unadapt_config,
     device,
     config,
     pre_train_loader,
@@ -46,7 +46,9 @@ def calculate_unadaptability_metrics(
 ):
     # Make the model unadaptable; optionally use pretraining dataset
     ufm_model = copy.deepcopy(model)
-    unadapt_method(ufm_model, pre_train_loader)
+    ufm_model = get_unadaptable_model(
+        ufm_model, unadapt_config, device, pre_train_loader
+    )
 
     # Calculate relative accuracy on pretraining test dataset
     _, ufm_pre_acc = test(ufm_model, device, pre_test_loader)
@@ -108,11 +110,10 @@ def main():
     )
     _, model_fine_acc = test(fine_model, device, fine_test_loader)
 
-    for method_config in config.unadapt:
-        unadapt_method = get_unadapt_method(method_config)
+    for unadapt_config in config.unadapt:
         ufm_pre_acc, ufm_fine_acc, ufm_fine_losses = calculate_unadaptability_metrics(
             model,
-            unadapt_method,
+            unadapt_config,
             device,
             config,
             pre_train_loader,
@@ -124,7 +125,7 @@ def main():
         fine_acc_ratio = ufm_fine_acc / model_fine_acc
         loss_gap_ratio = calculate_loss_gap_ratio(ufm_fine_losses, model_fine_losses)
 
-        print(f"Unadaptable method: {method_config}")
+        print(f"Unadaptable method: {unadapt_config}")
         print(f"Model acc: {pre_acc}")
         print(f"UFM acc: {ufm_pre_acc}")
         print(f"Pretrained acc ratio: {pre_acc_ratio: .4f}")
