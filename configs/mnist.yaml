@@ -21,7 +21,13 @@ finetune:
 
 # Unadaptability methods
 unadapt:
-  - method: 'prune'
-    prune_percentage: 0.7
-  - method: 'rescale'
-    rescale_factor: 1000000
+  # - method: 'prune'
+  #   prune_percentage: 0.7
+  # - method: 'rescale'
+  #   rescale_factor: 1000000
+  - method: 'gradient'
+    loss: 'hessian_trace'
+    lam: 0.1
+    lr: 0.001
+    gamma: 0.7
+    epochs: 1

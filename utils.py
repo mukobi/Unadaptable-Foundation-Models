@@ -41,9 +41,13 @@ def get_unadaptable_model(
     model: nn.Module, unadapt_config: DictConfig, device, train_loader
 ) -> nn.Module:
     if unadapt_config.method == "prune":
-        return apply_pruning_to_model(model, unadapt_config.prune_percentage)
+        return apply_pruning(model, unadapt_config.prune_percentage)
     elif unadapt_config.method == "rescale":
-        return apply_weight_rescaling_to_model(model, unadapt_config.rescale_factor)
+        return apply_weight_rescaling(model, unadapt_config.rescale_factor)
+    elif unadapt_config.method == "zeroth":
+        return apply_zeroth_order_learning(model, unadapt_config, device, train_loader)
+    elif unadapt_config.method == "gradient":
+        return apply_gradient_learning(model, unadapt_config, device, train_loader)
     else:
         raise NotImplementedError
 
@@ -70,7 +74,7 @@ def train(model, device, train_loader, num_epochs=1, learning_rate=1e-3, gamma=0
     progress_bar = tqdm(total=num_total_batches, position=0, leave=True)
     losses = []
     for epoch in range(1, num_epochs + 1):
-        for batch_idx, (data, target) in enumerate(train_loader):
+        for data, target in train_loader:
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             output = model(data)
