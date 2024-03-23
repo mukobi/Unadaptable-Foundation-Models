@@ -26,8 +26,8 @@ unadapt:
   # - method: 'rescale'
   #   rescale_factor: 1000000
   - method: 'gradient'
-    loss: 'hessian_trace'
+    loss: 'fim'
+    reduce: 'trace_max'
     lam: 0.1
     lr: 0.001
-    gamma: 0.7
     epochs: 1
