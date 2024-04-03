@@ -95,7 +95,7 @@ def get_huggingface_data(
 
     dataset = huggingface_datasets.load_dataset(dataset_path, dataset_subset)
     splits = dataset.keys()
-    if splits == ['train']:
+    if list(splits) == ['train']:
         assert test_num_rows is not None, 'only train split is available. test_num_rows must be provided to split the data into train and test sets.'
         assert test_num_rows < len(dataset['train']), 'test_num_rows must be less than the number of rows in the dataset.'
         assert test_num_rows > 0, 'test_num_rows must be greater than 0.'

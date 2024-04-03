@@ -13,7 +13,7 @@ class TestData(unittest.TestCase):
         batch_size = 128
         test_batch_size = 100
 
-        train_loader, test_loader = get_huggingface_data(dataset_path, dataset_subset, batch_size, test_batch_size)
+        train_loader, test_loader = get_huggingface_data(dataset_path, dataset_subset, batch_size, test_batch_size, test_num_rows=100)
 
         # Assert that the train_loader and test_loader are instances of torch.utils.
         # data.DataLoader
