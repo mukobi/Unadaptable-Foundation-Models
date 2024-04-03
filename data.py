@@ -70,7 +70,8 @@ def get_fashion_mnist_data(
 
     return fashion_mnist_train_loader, fashion_mnist_test_loader
 
-
+# TODO: Only support the datasets we plan to use (and specify their train/test splits etc manually for each)
+# No need to support any arbitrary hf dataset
 def get_huggingface_data(
     dataset_path: str,
     dataset_subset: str,
