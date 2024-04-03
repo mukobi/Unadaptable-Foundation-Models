@@ -75,34 +75,59 @@ def get_huggingface_data(
     dataset_path: str,
     dataset_subset: str,
     batch_size: int = 128, 
-    # test_batch_size: int = 1000
-) -> torch.utils.data.DataLoader:
+    test_batch_size: int = 100,
+    test_num_rows: int = None,
+) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
     """
-    Loads a Hugging Face dataset given its path and subset.
-    NOTE: you may have to split the dataset after loading.
+    Loads a dataset from Hugging Face Datasets library and returns train and test data loaders. Validation set not supported.
+    If only train split is available, the data is split into train and test sets based on the test_num_rows parameter. 
 
     Args:
-        dataset_path (str): The path to the Hugging Face dataset.
-        dataset_subset (str): The subset of the dataset to load.
-        batch_size (int, optional): The batch size for training data. Defaults to 128.
-        test_batch_size (int, optional): The batch size for test data. Defaults to 1000.
+        dataset_path (str): The path to the dataset.
+        dataset_subset (str): The name of the dataset subset to load.
+        batch_size (int, optional): The batch size for the train data loader. Defaults to 128.
+        test_batch_size (int, optional): The batch size for the test data loader. Defaults to 100.
+        test_num_rows (int, optional): The number of rows to use for the test set. Required if only train split is available.
 
     Returns:
-        torch.utils.data.DataLoader: A PyTorch DataLoader object containing the loaded dataset.
+        Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]: A tuple containing the train and test data loaders.
     """
 
     dataset = huggingface_datasets.load_dataset(dataset_path, dataset_subset)
+    splits = dataset.keys()
+    if splits == ['train']:
+        assert test_num_rows is not None, 'only train split is available. test_num_rows must be provided to split the data into train and test sets.'
+        assert test_num_rows < len(dataset['train']), 'test_num_rows must be less than the number of rows in the dataset.'
+        assert test_num_rows > 0, 'test_num_rows must be greater than 0.'
+        assert isinstance(test_num_rows, int), 'test_num_rows must be an integer.'
+        assert test_batch_size <= test_num_rows, 'test_batch_size must be less than or equal to test_num_rows.'
+        num_rows = len(dataset['train'])
+        train_num_rows = num_rows - test_num_rows
+        assert batch_size <= train_num_rows, 'batch_size must be less than or equal to the number of rows in the train set.'
+    
+        train_set = dataset['train'].select(range(train_num_rows))
+        test_set = dataset['train'].select(range(train_num_rows, num_rows))
 
-    dataset_loader = torch.utils.data.DataLoader(
-        dataset,
+    elif 'train' in splits and 'test' in splits:
+        train_set = dataset['train']
+        test_set = dataset['test']
+        assert batch_size <= len(train_set), 'batch_size must be less than or equal to the number of rows in the train set.'
+        assert test_batch_size <= len(test_set), 'test_batch_size must be less than or equal to the number of rows in the test set.'
+
+    else:
+        print(f'Available splits: {splits}')
+        raise ValueError('Dataset must have either a train or test split or both')
+
+    train_loader = torch.utils.data.DataLoader(
+        train_set,
         batch_size=batch_size,
         shuffle=True,
     )
 
-    # test_dataset = torch.utils.data.DataLoader(
-    #     dataset['test'],
-    #     batch_size=test_batch_size,
-    #     shuffle=True,
-    # )
+    test_loader = torch.utils.data.DataLoader(
+        test_set,
+        batch_size=test_batch_size,
+        shuffle=True,
+    )
 
-    return dataset_loader
+    return train_loader, test_loader
