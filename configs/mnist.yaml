@@ -2,6 +2,9 @@
 seed: 0
 model: MLP
 pretrained: False
+# Base name identifying the run
+# Full run name can be further specified from command line
+basename: mnist
 
 # Pretraining
 pretrain:

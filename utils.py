@@ -52,14 +52,6 @@ def get_unadaptable_model(
         raise NotImplementedError
 
 
-def load_config(config_path: str) -> DictConfig:
-    """Load a config file of a given path (absolute or relative to cwd)."""
-    conf = OmegaConf.load(config_path)
-    print(f"Loaded config from {config_path}")
-    print(OmegaConf.to_yaml(conf))
-    return conf
-
-
 def train(model, device, train_loader, num_epochs=1, learning_rate=1e-3, gamma=0.7):
     """
     Training function.

@@ -1,9 +1,5 @@
-matplotlib
-seaborn
 tqdm
 torch
 torchvision
-ipython
-ipykernel
-ipywidgets
 omegaconf
+numpy

@@ -1,0 +1,11 @@
+# Packages for devs; jupyter things etc.
+matplotlib
+seaborn
+tqdm
+torch
+torchvision
+ipython
+ipykernel
+ipywidgets
+omegaconf
+numpy

@@ -1,14 +1,17 @@
-import argparse
 import copy
+import os
+import sys
 
 import numpy as np
 import torch
+from torch.distributed.elastic.multiprocessing.errors import record
 
+import cli
+from settings import ufm_settings
 from utils import (
     get_dataset,
     get_model,
     get_unadaptable_model,
-    load_config,
     seed_all,
     test,
     train,
@@ -65,12 +68,34 @@ def calculate_unadaptability_metrics(
 
     return ufm_pre_acc, ufm_fine_acc, ufm_fine_losses
 
-
+# For recording tracebacks on CAIS:
+# https://cluster.safe.ai/#enabling-debugging-for-distributed-training
+@record
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default="configs/mnist.yaml")
-    args = parser.parse_args()
-    config = load_config(args.config)
+    # Parse args and the config file
+    args, config = cli.parse_arguments()
+    ufm_settings.load_config(config)
+    ufm_settings.NON_INTERACTIVE = args.non_interactive
+    ufm_settings.VERBOSE = args.verbose
+    ufm_settings.DRY_RUN = args.dry_run
+
+    # Run name
+    if args.run_name:
+        ufm_settings.set_run_name(args.run_name)
+
+    if not os.path.isdir(ufm_settings.STORE_PATH) and not ufm_settings.DRY_RUN:
+        # Create dir
+        if ufm_settings.NON_INTERACTIVE:
+            print(f"Creating new Store path dir: {ufm_settings.STORE_PATH}")
+            os.mkdir(ufm_settings.STORE_PATH)
+        else:
+            answer = input(f"Store path '{ufm_settings.STORE_PATH}' does not exist. Create? [y/n]")
+            if answer != 'y':
+                os.mkdir(ufm_settings.STORE_PATH)
+            else:
+                # Exit
+                print("Exiting")
+                sys.exit()
 
     seed_all(config.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
