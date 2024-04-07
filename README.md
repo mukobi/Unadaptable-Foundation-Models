@@ -5,31 +5,10 @@
 1. Install PyTorch separately (for local models). You need torch for most experiments and torchvision for the MNIST toy model.
 > See https://pytorch.org/get-started/locally/
 
-2. There are two requirements files: `requirements.txt` and `requirements-dev.txt`. The former is pared back and 
-   should include only the essentials for e.g. running on the cluster. The latter is for devs and can include 
-   visualization and jupyter bells and whistles etc.
+2. Install requirements
 ```bash
-pip install -r requirements-dev.txt
+pip install -r requirements.txt
 ```
-
-## CAIS Compute Cluster
-After logging into the cluster, you can transfer from the login node to a compute node with
-```bash
-srun --partition=single --pty bash
-```
-You may want to add an alias to you `.bashrc`.
-From there you can run your compute jobs.
-
-You can run a one-off job with `srun`, specifying your various params.
-
-> _All our jobs must be run with `--partition=single` or `interactive`._
-
-Alternative to `srun`, you submit a job to the scheduler with `sbatch`. Simply call e.g. `sbatch <sbatch_file>`. Your 
-file should specify various run parameters. We 
-have a simple executable `sbatch_run` you can reference.
-
-You can then view your jobs with `squeue`. When plain, this shows all jobs, but you can isolate your own with 
-`squeue -u <username>`.
 
 ### Setup script
 

@@ -75,7 +75,6 @@ def main():
     # Parse args and the config file
     args, config = cli.parse_arguments()
     ufm_settings.load_config(config)
-    ufm_settings.NON_INTERACTIVE = args.non_interactive
     ufm_settings.VERBOSE = args.verbose
     ufm_settings.DRY_RUN = args.dry_run
 
@@ -85,17 +84,8 @@ def main():
 
     if not os.path.isdir(ufm_settings.STORE_PATH) and not ufm_settings.DRY_RUN:
         # Create dir
-        if ufm_settings.NON_INTERACTIVE:
-            print(f"Creating new Store path dir: {ufm_settings.STORE_PATH}")
-            os.mkdir(ufm_settings.STORE_PATH)
-        else:
-            answer = input(f"Store path '{ufm_settings.STORE_PATH}' does not exist. Create? [y/n]")
-            if answer != 'y':
-                os.mkdir(ufm_settings.STORE_PATH)
-            else:
-                # Exit
-                print("Exiting")
-                sys.exit()
+        print(f"Creating new Store path dir: {ufm_settings.STORE_PATH}")
+        os.mkdir(ufm_settings.STORE_PATH)
 
     seed_all(config.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"

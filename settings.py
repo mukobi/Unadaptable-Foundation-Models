@@ -26,7 +26,6 @@ class UFMSettings:
         self.DRY_RUN = False
         self.SEED = None
         self.VERBOSE = False
-        self.NON_INTERACTIVE = False
 
         return
 

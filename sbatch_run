@@ -2,8 +2,7 @@
 #SBATCH --time=00:10:00  # time allocation, HH:MM:SS
 #SBATCH --nodes=1
 #SBATCH --partition=single
-#SBATCH --mem=128  # memory per node; default is megabytes; Nvidia A100 has 80G; can use G for gigs etc
-#SBATCH --job-name=ufm_test  # job name for the allocation
+#SBATCH --job-name=ufm  # job name for the allocation
 #SBATCH --output=logs/%x-%j.out
 
 # Run our UFM setup

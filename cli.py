@@ -20,7 +20,7 @@ def parse_arguments() -> Tuple[Any, DictConfig]:
     )
     parser.add_argument(
         "--dry-run", type=bool, default=False, action="store_true",
-        help="Dry run. Avoids saving/overwriting files etc."
+        help="Dry run for debugging. Prints information about the potential run."
     )
     parser.add_argument(
         "--name", type=str, default=None, help="Optionally identify your run"
@@ -28,9 +28,6 @@ def parse_arguments() -> Tuple[Any, DictConfig]:
     # Verbose is boolean for now
     parser.add_argument(
         "--verbose", action="store_true", help="Increase output verbosity"
-    )
-    parser.add_argument(
-        "--non-interactive", action="store_true", help="Whether to run non-interactively"
     )
 
     args = parser.parse_args()
