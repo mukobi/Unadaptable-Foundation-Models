@@ -9,10 +9,9 @@ To setup, simply run `pip install .` from project root
 You can install in dev mode to include additional dependencies for data visualization etc.
 
 ```bash
-pip install ".[dev]"
-# Or for editable mode
 pip install -e ".[dev]"
 ```
+
 ### Weights & Biases (wandb)
 The `wandb` package allows for those with an account to visualize various information about their runs. 
 However, using the package prompts users to enter their account login info (which they only need to do the first time). 
