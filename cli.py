@@ -1,4 +1,5 @@
 import argparse
+import os
 
 from omegaconf import DictConfig, OmegaConf
 from typing import Any, Tuple
@@ -19,7 +20,7 @@ def parse_arguments() -> Tuple[Any, DictConfig]:
         "--config", type=str, default="configs/mnist.yaml", help="U-method config file"
     )
     parser.add_argument(
-        "--dry-run", type=bool, default=False, action="store_true",
+        "--dry-run", action="store_true",
         help="Dry run for debugging. Prints information about the potential run."
     )
     parser.add_argument(
@@ -29,8 +30,50 @@ def parse_arguments() -> Tuple[Any, DictConfig]:
     parser.add_argument(
         "--verbose", action="store_true", help="Increase output verbosity"
     )
+    # Disabling wandb online integration
+    parser.add_argument(
+        "--disable-wandb", action="store_true", help="Disable WandB online integration"
+    )
+    parser.add_argument(
+        "--seed", "-s", type=int, default=None, help="Seed the run. Defaults to config seed."
+    )
+    parser.add_argument(
+        "--store-path", type=str, default=None,
+        help="Directory for storing data, models, etc. WandB will also be directed here."
+    )
 
     args = parser.parse_args()
     config = load_config(args.config)
+
+    if not args.store_path:
+        # Determine automatically
+        run_name = args.name or "default"
+        store_path = os.path.join(os.getcwd(), "store", config["basename"], run_name)
+    else:
+        store_path = args.store_path.lstrip(os.getcwd()).lstrip("/")
+        reserved_words = (
+            "data", "tests", "src", "build", "configs"
+        )
+        if store_path.startswith(reserved_words):
+            raise ValueError(
+                f"--store-path argument cannot start with reserved words {reserved_words}"
+            )
+        store_path = os.path.join(os.getcwd(), store_path)
+
+    if not os.path.isdir(store_path) and not args.dry_run:
+        # Create dir
+        print(f"Creating new Store path dir: {store_path}")
+        os.makedirs(store_path, exist_ok=True)
+
+    # Override config specifications with args
+    config.update({
+        "run_name": args.name or "default",
+        "store_path": store_path,
+        "dry_run": args.dry_run,
+        "verbose": args.verbose,
+        "disable_wandb": args.disable_wandb,
+        "config_file": args.config or None,
+        "seed": args.seed if args.seed else config.get("seed", 8675309),
+    })
 
     return args, config

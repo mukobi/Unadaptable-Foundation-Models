@@ -1,12 +1,13 @@
 import copy
 import os
+import sys
 
 import numpy as np
 import torch
+import wandb
 from torch.distributed.elastic.multiprocessing.errors import record
 
 import cli
-from settings import ufm_settings
 from ufm.utils import (
     get_dataset,
     get_model,
@@ -73,18 +74,12 @@ def calculate_unadaptability_metrics(
 def main():
     # Parse args and the config file
     args, config = cli.parse_arguments()
-    ufm_settings.load_config(config)
-    ufm_settings.VERBOSE = args.verbose
-    ufm_settings.DRY_RUN = args.dry_run
 
-    # Run name
-    if args.run_name:
-        ufm_settings.set_run_name(args.run_name)
-
-    if not os.path.isdir(ufm_settings.STORE_PATH) and not ufm_settings.DRY_RUN:
-        # Create dir
-        print(f"Creating new Store path dir: {ufm_settings.STORE_PATH}")
-        os.mkdir(ufm_settings.STORE_PATH)
+    wandb.init(
+        project="unadaptable-foundation-models", config=dict(config),
+        mode="disabled" if args.disable_wandb else "online",
+        dir=config["store_path"]
+    )
 
     seed_all(config.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"

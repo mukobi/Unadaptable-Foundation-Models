@@ -13,3 +13,11 @@ pip install ".[dev]"
 # Or for editable mode
 pip install -e ".[dev]"
 ```
+### Weights & Biases (wandb)
+The `wandb` package allows for those with an account to visualize various information about their runs. 
+However, using the package prompts users to enter their account login info (which they only need to do the first time). 
+To disable this prompting (and online features), use the `--disable-wandb` argument in your call.
+
+```bash
+python main.py --disable-wandb
+```

@@ -17,6 +17,7 @@ dependencies = [
     "transformers",
     "omegaconf",
     "numpy",
+    "wandb",
 ]
 
 [project.optional-dependencies]
