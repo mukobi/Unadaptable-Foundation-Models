@@ -9,3 +9,4 @@ ipywidgets
 omegaconf
 transformers
 datasets
+wandb
