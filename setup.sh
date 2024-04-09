@@ -2,6 +2,7 @@
 
 # Set variable to where your source resides
 export PROJECT_DIR="${HOME}/ufm"
+
 echo "Entering $PROJECT_DIR"
 cd $PROJECT_DIR
 
@@ -18,12 +19,5 @@ source "${PROJECT_DIR}/venv/bin/activate"
 # Update pip from their ancient version 9
 pip install --upgrade pip
 
-echo "Installing python requirements"
-pip3 install -r requirements.txt
-
-# Update PYTHONPATH to include the project directory
-# This change is only effective within this script and the activated venv session
-export PYTHONPATH="${PROJECT_DIR}:${PYTHONPATH}"
-echo "Updating PYTHONPATH with project directory..."
-echo "PYTHONPATH=${PYTHONPATH}"
-
+echo "Installing ufm package"
+pip install .

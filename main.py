@@ -1,6 +1,5 @@
 import copy
 import os
-import sys
 
 import numpy as np
 import torch
@@ -8,7 +7,7 @@ from torch.distributed.elastic.multiprocessing.errors import record
 
 import cli
 from settings import ufm_settings
-from utils import (
+from ufm.utils import (
     get_dataset,
     get_model,
     get_unadaptable_model,

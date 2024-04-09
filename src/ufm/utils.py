@@ -1,16 +1,10 @@
-from functools import partial
-
 import numpy as np
-import torch
-from omegaconf import DictConfig, OmegaConf
-from torch import optim
-from torch.nn import functional as F
+from omegaconf import DictConfig
 from torch.optim.lr_scheduler import StepLR
-from tqdm import tqdm
 
 from data import *
-from models import *
-from unadapt import *
+from ufm.models import *
+from ufm.unadapt import *
 
 
 def seed_all(seed):
