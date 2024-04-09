@@ -10,6 +10,7 @@ license = {file = "LICENSE"}
 authors = [{name = "Michael Walters"}, {name = "Gabriel Mukobi"},] # Please add your name from SPAR
 description = "Unadaptable Foundation Models evaluations and benchmarking."
 dependencies = [
+    "datasets",  # huggingface
     "tqdm",
     "torch",
     "torchvision",

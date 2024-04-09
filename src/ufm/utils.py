@@ -2,7 +2,7 @@ import numpy as np
 from omegaconf import DictConfig
 from torch.optim.lr_scheduler import StepLR
 
-from data import *
+from ufm.data import *
 from ufm.models import *
 from ufm.unadapt import *
 

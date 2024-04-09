@@ -1,10 +1,7 @@
-from typing import Tuple
-
-import datasets as huggingface_datasets
 import torch.utils.data
 import torch
 import unittest
-from data import get_huggingface_data
+from ufm.data import get_huggingface_data
 
 class TestData(unittest.TestCase):
     def test_get_huggingface_data(self):
