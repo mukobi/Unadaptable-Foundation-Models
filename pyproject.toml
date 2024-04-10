@@ -18,6 +18,7 @@ dependencies = [
     "omegaconf",
     "numpy",
     "wandb",
+    "hydra-core",
 ]
 
 [project.optional-dependencies]

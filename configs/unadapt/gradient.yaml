@@ -1,0 +1,6 @@
+method: 'gradient'
+loss: 'fim'
+reduce: 'trace_max'
+lam: 0.1
+lr: 0.001
+epochs: 1

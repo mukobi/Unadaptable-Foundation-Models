@@ -1,0 +1,11 @@
+# Run meta
+dry_run: false  # Dry run for debugging
+verbosity: 1  # 0 for quiet etc.
+disable_wandb: false  # Disable WandB online integration
+
+# General
+seed: 0
+model: MLP
+pretrained: False
+# Base name identifying the run
+basename: default

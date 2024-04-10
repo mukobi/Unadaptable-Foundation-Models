@@ -167,3 +167,6 @@ data
 
 # IDE
 .idea*
+
+# Hydra
+outputs/*
