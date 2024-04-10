@@ -4,6 +4,7 @@ import wandb
 
 import cli
 import constants
+import countermeasures
 import fine_tune
 import metrics
 import models
@@ -35,7 +36,21 @@ def main():
     model_unadapted = unadapt_method(model_base, wandb.config.unadapt)
 
     logger.info("Benchmarking unadapted model for relative pre-training performance")
-    pretrain_score.run_benchmark(model_unadapted, wandb.config.pretrain, logger)
+    pretrain_score.run_benchmark(
+        model_unadapted, wandb.config.pretrain, countermeasures=False, logger=logger
+    )
+
+    logger.info("Run basic countermeasures")
+    model_unadapted = countermeasures.run_countermeasures(
+        model_unadapted, wandb.config.countermeasures, logger
+    )
+
+    logger.info(
+        "Benchmarking countermeasured model for relative pre-training performance"
+    )
+    pretrain_score.run_benchmark(
+        model_unadapted, wandb.config.pretrain, countermeasures=True, logger=logger
+    )
 
     logger.info("Fine-tuning and recording results")
     fine_tune.run_fine_tune(model_unadapted, wandb.config.finetune, logger)
