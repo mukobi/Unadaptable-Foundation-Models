@@ -1,5 +1,6 @@
 import argparse
 import os
+import json
 
 from omegaconf import DictConfig, OmegaConf
 from typing import Any, Tuple
@@ -9,7 +10,6 @@ def load_config(config_path: str) -> DictConfig:
     """Load a config file of a given path (absolute or relative to cwd)."""
     conf = OmegaConf.load(config_path)
     print(f"Loaded config from {config_path}")
-    print(OmegaConf.to_yaml(conf))
     return conf
 
 
@@ -40,6 +40,15 @@ def parse_arguments() -> Tuple[Any, DictConfig]:
     parser.add_argument(
         "--store-path", type=str, default=None,
         help="Directory for storing data, models, etc. WandB will also be directed here."
+    )
+    parser.add_argument(
+        "--model", default=None, help="Optionally pass in json object (string) for model overrides"
+    )
+    parser.add_argument(
+        "--finetune", default=None, help="Optionally pass in json object (string) for finetune overrides"
+    )
+    parser.add_argument(
+        "--pretrain", default=None, help="Optionally pass in json object (string) for pretrain overrides"
     )
 
     args = parser.parse_args()
@@ -75,5 +84,13 @@ def parse_arguments() -> Tuple[Any, DictConfig]:
         "config_file": args.config or None,
         "seed": args.seed if args.seed else config.get("seed", 8675309),
     })
+    
+    # Overrides for json objects
+    if args.model:
+        config.update({"model": json.loads(args.model)})
+    if args.finetune:
+        config.update({"finetune": json.loads(args.finetune)})
+    if args.pretrain:
+        config.update({"pretrain": json.loads(args.pretrain)})
 
     return args, config
