@@ -45,7 +45,7 @@ wraps around our `main` function and seamlessly allows for config parameter chan
 python main.py pretrain.epochs=20
 ```
 
-overwrites the `pretrain.epochs` parameter. Notice that `pretrain.epochs` was specified to ArgParse in advance.  
+overwrites the `pretrain.epochs` parameter. 
 The wrapper specifies `"configs"` as the config path. This is important because it tells `hydra` where the root 
 directory is, which allows configs to reference other configs within, among other things. 
 
@@ -131,10 +131,6 @@ the command line
 python main.py --config-name=mnist pretrain.epochs=20 seed=8675309
 # Selecting a different unadapt method
 python main.py --config-name=mnist unadapt=prune
-```
-You can also provide one-off params with `+`:
-```bash
-python main.py --config-name=mnist +slurm_log=/slurm/path
 ```
 
 #### 4. Experiments

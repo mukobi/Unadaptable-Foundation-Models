@@ -89,9 +89,6 @@ def init_run(cfg: DictConfig) -> None:
 
     return
 
-# For recording tracebacks on CAIS:
-# https://cluster.safe.ai/#enabling-debugging-for-distributed-training
-@record
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def main(cfg: DictConfig):
     # Parse config
