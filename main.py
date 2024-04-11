@@ -1,14 +1,18 @@
-import argparse
 import copy
 
+import hydra
 import numpy as np
 import torch
+import wandb
 
-from utils import (
+from omegaconf import DictConfig, OmegaConf
+from torch.distributed.elastic.multiprocessing.errors import record
+
+from config import parse_config
+from ufm.utils import (
     get_dataset,
     get_model,
     get_unadaptable_model,
-    load_config,
     seed_all,
     test,
     train,
@@ -65,36 +69,53 @@ def calculate_unadaptability_metrics(
 
     return ufm_pre_acc, ufm_fine_acc, ufm_fine_losses
 
+def init_run(cfg: DictConfig) -> None:
+    """
+    Initialize the run
+    You can later access the Run object with wandb.run
+    """
+    wandb.init(
+        project=cfg.get("project", "unadaptable-foundation-models"),
+        # Convert config to dict type
+        config=OmegaConf.to_container(cfg, resolve=True),
+        mode="disabled" if args.disable_wandb else "online",
+        tags=cfg.get("tags", None),
+        # dir=cfg["store_path"],
+    )
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default="configs/mnist.yaml")
-    args = parser.parse_args()
-    config = load_config(args.config)
-
-    seed_all(config.seed)
+    seed_all(cfg.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using {device} device")
 
-    model = get_model(config.model, device)
+    return
+
+@hydra.main(version_base=None, config_path="configs", config_name="config")
+def main(cfg: DictConfig):
+    # Parse config
+    cfg = parse_config(cfg)
+
+    # Init
+    init_run(cfg)
+
+    model = get_model(cfg.model, device)
     pre_train_loader, pre_test_loader = get_dataset(
-        config.pretrain.dataset,
-        config.pretrain.batch_size,
-        config.pretrain.test_batch_size,
+        cfg.pretrain.dataset,
+        cfg.pretrain.batch_size,
+        cfg.pretrain.test_batch_size,
     )
     fine_train_loader, fine_test_loader = get_dataset(
-        config.finetune.dataset,
-        config.finetune.batch_size,
-        config.finetune.test_batch_size,
+        cfg.finetune.dataset,
+        cfg.finetune.batch_size,
+        cfg.finetune.test_batch_size,
     )
 
-    if not config.pretrained:
+    if not cfg.pretrained:
         train(
             model,
             device,
             pre_train_loader,
-            config.pretrain.epochs,
-            learning_rate=config.pretrain.lr,
+            cfg.pretrain.epochs,
+            learning_rate=cfg.pretrain.lr,
         )
 
     _, pre_acc = test(model, device, pre_test_loader)
@@ -105,12 +126,12 @@ def main():
         fine_model,
         device,
         fine_train_loader,
-        config.finetune.epochs,
-        learning_rate=config.finetune.lr,
+        cfg.finetune.epochs,
+        learning_rate=cfg.finetune.lr,
     )
     _, model_fine_acc = test(fine_model, device, fine_test_loader)
 
-    for unadapt_config in config.unadapt:
+    for unadapt_config in cfg.unadapt:
         ufm_pre_acc, ufm_fine_acc, ufm_fine_losses = calculate_unadaptability_metrics(
             model,
             unadapt_config,
@@ -134,6 +155,8 @@ def main():
         print(f"Fine-tuned acc ratio: {fine_acc_ratio: .4f}")
         print(f"Loss gap ratio: {loss_gap_ratio: .4f}")
 
+    # Call cleanup
+    wandb.finish()
 
 if __name__ == "__main__":
     main()
