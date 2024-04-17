@@ -3,7 +3,14 @@ seed: 0
 basename: default  # Base name identifying the run
 device: ~  # "cpu" or "cuda"; defaults to cuda if available
 dry_run: false  # Dry run for debugging
-verbosity: 1  # 0 for quiet etc.
+verbosity: 1  # [0, 1, 2] of increasing verbosity
 disable_wandb: false  # Disable WandB online integration
 model: MLP
 pretrained: False
+
+# Channels to execute; See utils.py
+channels:
+  - pretrain
+  - unadapt
+  - countermeasure
+  - finetune

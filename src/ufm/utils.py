@@ -1,14 +1,62 @@
+import logging
 import random
 
 import numpy as np
 
-from hydra.core.hydra_config import HydraConfig
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
+from omegaconf.errors import ValidationError
 from torch.optim.lr_scheduler import StepLR
+from enum import Enum
 
 from ufm.data import *
 from ufm.models import *
 from ufm.unadapt import *
+
+
+logger = logging.getLogger()
+
+class Channel(Enum):
+    PRETRAIN: str = "pretrain"
+    UNADAPT: str = "unadapt"
+    COUNTERMEASURE: str = "countermeasure"
+    FINETUNE: str = "finetune"
+
+
+def validate_config(cfg: DictConfig) -> DictConfig:
+    """
+    Apply suite of config validations, raising
+    """
+    # Logging
+    verbosity = cfg.get("verbosity", 1)
+    if verbosity == 2:
+        # Debug, most verbose
+        logger.setLevel(logging.DEBUG)
+    elif verbosity == 1:
+        # All but debug
+        logger.setLevel(logging.INFO)
+    elif verbosity == 0:
+        # Supress warnings; Most quiet; Still writes errors
+        logger.setLevel(logging.ERROR)
+    else:
+        raise ValidationError(f"Invalid value for 'verbosity': {verbosity}")
+
+    # Channels
+    if not cfg.channels:
+        logger.warning("No channels specified in config")
+    for ch in cfg.channels:
+        try:
+            Channel(ch)
+        except ValueError as ve:
+            raise ValidationError(ve)
+
+    # Tags must be list if provided
+    if isinstance(cfg.get("tags", None), str):
+        cfg["tags"] = [cfg["tags"]]
+
+    # Print for debug
+    logger.debug(OmegaConf.to_yaml(cfg))
+
+    return cfg
 
 
 def set_seed(seed: int) -> None:
