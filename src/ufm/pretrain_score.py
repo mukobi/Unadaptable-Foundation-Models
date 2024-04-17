@@ -15,11 +15,11 @@ __author__ = "owen-yeung"
 
 
 def run_benchmark(
-        model_unadapted, 
-        wandb_config_pretrain_UNIMPLEMENTED=None, 
-        countermeasures_UNIMPLEMENTED=False, # countermeasures to reduce the efficacy of unadpt method?
-        logger: Logger = None,
-    ): 
+    model_unadapted,
+    wandb_config_pretrain_UNIMPLEMENTED=None,
+    countermeasures=False,  # countermeasures to reduce the efficacy of unadpt method?
+    logger: Logger = None,
+):
     """
     [IN DEVELOPMENT]
     Runs Open LLM Leaderboard tasks on model and logs results to wandb.
@@ -42,14 +42,20 @@ def run_benchmark(
     if logger != None:
         logger.info("Running Open LLM Leaderboard tasks on model...")
 
-    results = lm_eval.simple_evaluate( # call simple_evaluate
+    results = lm_eval.simple_evaluate(  # call simple_evaluate
         model=model_unadapted,
-        tasks=["arc", "hellaswag", "mmlu", "truthfulqa", "winogrande", "gsm8k"], # tasks from Open LLM leaderboard
+        tasks=[
+            "arc",
+            "hellaswag",
+            "mmlu",
+            "truthfulqa",
+            "winogrande",
+            "gsm8k",
+        ],  # tasks from Open LLM leaderboard
         num_fewshot=0,
         task_manager=task_manager,
         # ...
     )
-
 
     # Log results to wandb
     if logger != None:
@@ -61,4 +67,3 @@ def run_benchmark(
     wandb_logger.post_init(results)
     wandb_logger.log_eval_result()
     wandb_logger.log_eval_samples(results["samples"])  # if log_samples
-
