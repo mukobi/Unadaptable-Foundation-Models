@@ -1,4 +1,4 @@
-# Unadapable-Foundation-Models
+# Unadaptable-Foundation-Models
 
 ## Setup
 

@@ -39,7 +39,7 @@ def run_benchmark(
     # Setting `task_manager` to the one above is optional and should generally be done
     # if you want to include tasks from paths other than ones in `lm_eval/tasks`.
     # `simple_evaluate` will instantiate its own task_manager is the it is set to None here.
-    if logger != None:
+    if logger is not None:
         logger.info("Running Open LLM Leaderboard tasks on model...")
 
     results = lm_eval.simple_evaluate( # call simple_evaluate
@@ -52,7 +52,7 @@ def run_benchmark(
 
 
     # Log results to wandb
-    if logger != None:
+    if logger is not None:
         logger.info("Logging results to wandb...")
 
     wandb_logger = WandbLogger(
