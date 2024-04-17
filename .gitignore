@@ -170,3 +170,4 @@ data
 
 # Hydra
 outputs/*
+wandb/

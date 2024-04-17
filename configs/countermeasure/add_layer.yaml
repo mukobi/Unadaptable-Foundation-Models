@@ -1,0 +1,2 @@
+method: 'add_layer'
+model_type: 'MLP'

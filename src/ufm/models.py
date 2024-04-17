@@ -22,3 +22,11 @@ class MLPNet(nn.Module):
         x = x.view(-1, 784)
         x = self.layers(x)
         return F.log_softmax(x, dim=1)
+
+
+def load_model(model_name: str, device: str) -> nn.Module:
+    if model_name == "MLP":
+        model = MLPNet().to(device)
+    else:
+        raise ValueError(f"Unknown model type {model_name}")
+    return model

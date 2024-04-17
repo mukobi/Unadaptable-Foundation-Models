@@ -3,7 +3,8 @@ defaults:
   - base_config
   # Notice the keywords below match config dirs
   - pretrain: mnist
-  - unadapt: gradient
+  - unadapt: prune
+  #- countermeasure: add_layer
   - /finetune/fashion
   - _self_
 

@@ -67,28 +67,24 @@ def compute_hessian_loss(model, ref_model, data, target, lam, hessian_reduce="fr
     return hess_loss
 
 
-def compute_loss(model, ref_model, data, target, unadapt_config):
-    lam = unadapt_config.lam
-    if unadapt_config.loss == "hessian":
+def compute_loss(model, ref_model, data, target, lam, loss_type="hessian", reduce="fro"):
+    if loss_type == "hessian":
         return compute_hessian_loss(
-            model, ref_model, data, target, lam, unadapt_config.reduce
+            model, ref_model, data, target, lam, reduce
         )
-    elif unadapt_config.loss == "fim":
+    elif loss_type == "fim":
         return compute_fim_loss(
-            model, ref_model, data, target, lam, unadapt_config.reduce
+            model, ref_model, data, target, lam, reduce
         )
     else:
         raise NotImplementedError
 
 
-def apply_zeroth_order_learning(model, unadapt_config, device, train_loader):
-    return model
+def apply_zeroth_order_learning(model, device, train_loader):
+    raise NotImplementedError
 
 
-def apply_gradient_learning(model, unadapt_config, device, train_loader):
-    lam = unadapt_config.lam
-    lr = unadapt_config.lr
-    num_epochs = unadapt_config.epochs
+def apply_gradient_learning(model, device, train_loader, lam, lr, num_epochs):
     ref_model = copy.deepcopy(model)
 
     optimizer = optim.AdamW(model.parameters(), lr=lr)
@@ -99,9 +95,22 @@ def apply_gradient_learning(model, unadapt_config, device, train_loader):
         for data, target in train_loader:
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
-            loss = compute_loss(model, ref_model, data, target, unadapt_config)
+            loss = compute_loss(model, ref_model, data, target, lam)
             loss.backward()
             optimizer.step()
             progress_bar.update()
     progress_bar.close()
     return model
+
+
+def apply_unadaptable_method(model: nn.Module, unadapt_method: str, config: dict, device: str, train_loader) -> nn.Module:
+    if unadapt_method == "prune":
+        return apply_pruning(model, config.get("prune_percentage"))
+    elif unadapt_method == "rescale":
+        return apply_weight_rescaling(model, config.get("rescale_factor"))
+    elif unadapt_method == "zeroth":
+        return apply_zeroth_order_learning(model, device, train_loader, config.get("lam"), config.get("lr"), config.get("epochs"))
+    elif unadapt_method == "gradient":
+        return apply_gradient_learning(model, device, train_loader, config.get("lam"), config.get("lr"), config.get("epochs"))
+    else:
+        raise NotImplementedError

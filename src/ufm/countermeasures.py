@@ -17,38 +17,22 @@ class ResidualModule(nn.Module):
         x = x + residual
         return x
 
-def run_countermeasures(model, config: dict, logger: logging.Logger):
+def run_countermeasures(model, method: str, logger: logging.Logger, **kwargs ):
     """
     run countermeasures on the model to make it easier to finetune
-    expected config:
-    
-    {
-        "countermeasures": [ 
-            "method" : "countermeasure_name", can be "add_layer", "replace_layer" #TODO add more methods
-            **kwargs
-        ]
-        
-    }
     """
-
-    if "countermeasures" not in config:
-        logger.info("No countermeassures to apply")
-        return model
     
-    for countermeasure in config["countermeasures"]:
-        # some of the countermeasures can not be applied together
-        
-        if countermeasure["method"] == "add_layer":
-            if countermeasure["model_type"] == "MLPNet":
-                logger.info("Adding layers to the model")
-                raise NotImplementedError("Residual layers are not implemented yet")
-            else:
-                raise ValueError(f"Unknown model type {countermeasure['model_type']}")
-            
-        elif countermeasure["method"] == "replace_layer":
-            raise NotImplementedError("Residual layers are not implemented yet")
-        
+    if method == "add_layer":
+        if kwargs.get('model_type') == "MLP":
+            logger.info("Adding layers to the model")
+            raise NotImplementedError
         else:
-            raise ValueError(f"Unknown countermeasure type {countermeasure['type']}")
+            raise ValueError(f"Unknown model type {kwargs.get('model_type')}")
+        
+    elif method == "replace_layer":
+        raise NotImplementedError("Residual layers are not implemented yet")
+    
+    else:
+        raise ValueError(f"Unknown countermeasure type {method}")
     
     return model

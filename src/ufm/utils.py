@@ -19,14 +19,6 @@ def set_seed(seed: int) -> None:
     torch.backends.cudnn.benchmark = False
 
 
-def get_model(model_name: str, device="cuda"):
-    if model_name.lower() == "mlp":
-        model = MLPNet().to(device)
-    else:
-        raise NotImplementedError
-    return model
-
-
 def get_dataset(dataset_name: str, batch_size: int = 64, test_batch_size: int = 1000):
     if dataset_name.lower() == "mnist":
         return get_mnist_data(batch_size, test_batch_size)
@@ -36,22 +28,9 @@ def get_dataset(dataset_name: str, batch_size: int = 64, test_batch_size: int = 
         raise NotImplementedError
 
 
-def get_unadaptable_model(
-    model: nn.Module, unadapt_config: DictConfig, device, train_loader
-) -> nn.Module:
-    if unadapt_config.method == "prune":
-        return apply_pruning(model, unadapt_config.prune_percentage)
-    elif unadapt_config.method == "rescale":
-        return apply_weight_rescaling(model, unadapt_config.rescale_factor)
-    elif unadapt_config.method == "zeroth":
-        return apply_zeroth_order_learning(model, unadapt_config, device, train_loader)
-    elif unadapt_config.method == "gradient":
-        return apply_gradient_learning(model, unadapt_config, device, train_loader)
-    else:
-        raise NotImplementedError
 
 
-def train(model, device, train_loader, num_epochs=1, learning_rate=1e-3, gamma=0.7):
+def train(model, device, train_loader, num_epochs=1, learning_rate=1e-3, gamma=0.7) -> list:
     """
     Training function.
 
@@ -83,28 +62,3 @@ def train(model, device, train_loader, num_epochs=1, learning_rate=1e-3, gamma=0
         scheduler.step()
     progress_bar.close()
     return losses
-
-
-def test(model, device, test_loader):
-    """Testing function."""
-    model.eval()
-    test_loss = 0
-    correct = 0
-    with torch.no_grad():
-        for data, target in test_loader:
-            data, target = data.to(device), target.to(device)
-            output = model(data)
-            # sum up batch loss
-            test_loss += F.nll_loss(output, target, reduction="sum").item()
-            # get the index of the max log-probability
-            pred = output.argmax(dim=1, keepdim=True)
-            correct += pred.eq(target.view_as(pred)).sum().item()
-
-    test_loss /= len(test_loader.dataset)
-
-    print(
-        f"\nTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)}"
-        f" ({100. * correct / len(test_loader.dataset):.0f}%)\n"
-    )
-
-    return test_loss, correct / len(test_loader.dataset)
