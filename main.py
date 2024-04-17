@@ -7,7 +7,7 @@ import wandb
 from ufm import countermeasures, fine_tuning, models, pretrain_score, unadapt, utils
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="config")
+@hydra.main(version_base=None, config_path="configs", config_name="base_config")
 def main(cfg: DictConfig):
     # Validate config
     cfg = utils.validate_config(cfg)
