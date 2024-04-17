@@ -78,7 +78,7 @@ def init_run(cfg: DictConfig) -> None:
         project=cfg.get("project", "unadaptable-foundation-models"),
         # Convert config to dict type
         config=OmegaConf.to_container(cfg, resolve=True),
-        mode="disabled" if args.disable_wandb else "online",
+        mode="disabled" if cfg.disable_wandb else "online",
         tags=cfg.get("tags", None),
         # dir=cfg["store_path"],
     )
