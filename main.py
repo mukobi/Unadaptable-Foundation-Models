@@ -89,7 +89,7 @@ def init_run(cfg: DictConfig) -> None:
 
     return
 
-@hydra.main(version_base=None, config_path="configs", config_name="config")
+@hydra.main(version_base=None, config_path="configs", config_name="base_config")
 def main(cfg: DictConfig):
     # Parse config
     cfg = parse_config(cfg)
