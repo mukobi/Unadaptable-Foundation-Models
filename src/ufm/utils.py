@@ -1,17 +1,12 @@
 import random
-from functools import partial
 
 import numpy as np
-import torch
-from omegaconf import DictConfig, OmegaConf
-from torch import optim
-from torch.nn import functional as F
+from omegaconf import DictConfig
 from torch.optim.lr_scheduler import StepLR
-from tqdm import tqdm
 
-from data import *
-from models import *
-from unadapt import *
+from ufm.data import *
+from ufm.models import *
+from ufm.unadapt import *
 
 
 def set_seed(seed: int) -> None:
@@ -54,14 +49,6 @@ def get_unadaptable_model(
         return apply_gradient_learning(model, unadapt_config, device, train_loader)
     else:
         raise NotImplementedError
-
-
-def load_config(config_path: str) -> DictConfig:
-    """Load a config file of a given path (absolute or relative to cwd)."""
-    conf = OmegaConf.load(config_path)
-    print(f"Loaded config from {config_path}")
-    print(OmegaConf.to_yaml(conf))
-    return conf
 
 
 def train(model, device, train_loader, num_epochs=1, learning_rate=1e-3, gamma=0.7):

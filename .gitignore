@@ -164,3 +164,9 @@ local/*
 
 # Data files
 data
+
+# IDE
+.idea*
+
+# Hydra
+outputs/*

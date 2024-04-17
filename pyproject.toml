@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ufm"
+readme = "README.md"
+version = "0.0.1"
+license = {file = "LICENSE"}
+authors = [{name = "Michael Walters"}, {name = "Gabriel Mukobi"},  {name = "Shinnosuke Uesaka"}] # Please add your name from SPAR
+description = "Unadaptable Foundation Models evaluations and benchmarking."
+dependencies = [
+    "datasets",  # huggingface
+    "tqdm",
+    "torch",
+    "torchvision",
+    "transformers",
+    "omegaconf",
+    "numpy",
+    "wandb",
+    "hydra-core",
+]
+
+[project.optional-dependencies]
+dev = [
+    "matplotlib",
+    "seaborn",
+    "ipython",
+    "ipykernel",
+    "ipywidgets",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Change if running only on Windows, Mac or Linux (comma-separated)
+# platforms = any
+
+# Require a min/specific Python version (comma-separated conditions)
+# python_requires = >=3.8
