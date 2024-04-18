@@ -22,7 +22,7 @@ def run_baseline(device: str, logger: logging.Logger):
     metrics.run_benchmark(model_base, device, wandb.config.metric, "finetuned_base_model/finetune_test_accuracy", logger, wandb.config.finetune["dataset"] if wandb.config.pretrain else None)
     
 
-@hydra.main(version_base=None, config_path="configs", config_name="config")
+@hydra.main(version_base=None, config_path="configs", config_name="base_config")
 def main(cfg: DictConfig):
     # TODO: Validate config
     #cfg = utils.validate_config(cfg)
