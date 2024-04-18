@@ -11,5 +11,3 @@ run_baseline: False # If True, calculates metric on the base model. If False, ap
 # Wandb run name identifying the run
 basename: default # run for calculating metric on the base model. If run_baseline is True, this will be the run name. If run_baseline is False, this will used to retrieve metrics for baseline from wandb.
 unadaptname: default # run for calculating metric on the unadapt model. If run_baseline is False, this will be the run name.
-
-# wandb run name will be f"{cfg.basename}: baseline" if cfg.run_baseline else '{cfg.basename}: {cfg.unadaptname}'
