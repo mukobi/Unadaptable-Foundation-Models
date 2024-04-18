@@ -171,3 +171,4 @@ data
 # Hydra
 outputs/*
 wandb/
+artifacts/*

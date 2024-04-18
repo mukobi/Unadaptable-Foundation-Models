@@ -3,6 +3,7 @@ import random
 import numpy as np
 from omegaconf import DictConfig
 from torch.optim.lr_scheduler import StepLR
+import wandb
 
 from ufm.data import *
 from ufm.models import *
@@ -27,7 +28,16 @@ def get_dataset(dataset_name: str, batch_size: int = 64, test_batch_size: int = 
     else:
         raise NotImplementedError
 
-
+def check_base_results_saved(base_name: str) -> bool:
+    """Check if the base model results are already saved."""
+    api = wandb.Api()
+    try:
+        run = api.runs(f"unadaptable-foundation-models", filters={"tags": base_name})
+        if len(run) == 0:
+            return False
+        return True
+    except:
+        return False
 
 
 def train(model, device, train_loader, num_epochs=1, learning_rate=1e-3, gamma=0.7) -> list:

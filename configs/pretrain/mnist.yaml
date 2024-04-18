@@ -1,5 +1,6 @@
-dataset: MNIST
+dataset: mnist
 epochs: 8
 lr: 0.001
+gamma: 0.7 # gamma for StepLR scheduler
 batch_size: 128
 test_batch_size: 1000

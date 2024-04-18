@@ -136,6 +136,13 @@ def get_hf_data(
     return data_loader
     
     
+def get_dataset(dataset_name: str, batch_size: int = 64, test_batch_size: int = 1000):
+    if dataset_name.lower() == "mnist":
+        return get_mnist_data(batch_size, test_batch_size)
+    elif dataset_name.lower() == "fashionmnist":
+        return get_fashion_mnist_data(batch_size, test_batch_size)
+    else:
+        raise NotImplementedError
 
 
 # def DEPRECATED_get_huggingface_data(

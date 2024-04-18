@@ -1,0 +1,14 @@
+# Special hydra param, inherit defaults from base_config.yaml
+defaults:
+  - base_config
+  # Notice the keywords below match config dirs
+  - pretrain: mnist
+  - /finetune/fashion
+  - _self_
+
+# Base name identifying the run
+basename: mnist
+model: MLP_MNIST # Pretrained model defined in models.load_pretrained_model.
+metric: accuracy # Metric to be used for evaluating the model before and after finetune. Currently supports "accuracy" (for mnist) and "llm_tasks" (for llm).
+run_baseline: True # If True, calculates metric on the base model. If False, applies unadapt and calculate metric on anadapt model.
+# Wandb run name identifying the run

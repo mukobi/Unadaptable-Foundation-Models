@@ -103,7 +103,7 @@ def apply_gradient_learning(model, device, train_loader, lam, lr, num_epochs):
     return model
 
 
-def apply_unadaptable_method(model: nn.Module, unadapt_method: str, config: dict, device: str, train_loader) -> nn.Module:
+def apply_unadapt_method(model: nn.Module, device: str, unadapt_method: str, config: dict,  train_loader) -> nn.Module:
     if unadapt_method == "prune":
         return apply_pruning(model, config.get("prune_percentage"))
     elif unadapt_method == "rescale":

@@ -1,0 +1,15 @@
+# Special hydra param, inherit defaults from base_config.yaml
+defaults:
+  - base_config
+  # Notice the keywords below match config dirs
+  - pretrain: mnist
+  - unadapt: prune
+  #- countermeasure: add_layer
+  - /finetune/fashion
+  - _self_
+
+# Base name identifying the run
+model: MLP_MNIST
+basename: mnist # run for calculating metric on the base model. If run_baseline is True, this will be the run name. If run_baseline is False, this will used to retrieve metrics for baseline from wandb.
+unadaptname: mnist_prune # run for calculating metric on the unadapt model. If run_baseline is False, this will be the run name.
+run_baseline: False # If True, calculates metric on the base model. If False, applies unadapt and calculate metric on anadapt model.

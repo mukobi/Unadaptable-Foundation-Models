@@ -5,8 +5,11 @@ disable_wandb: false  # Disable WandB online integration
 
 # General
 seed: 0
-model: MLP
-metric: accuracy # accuracy or llm_tasks
-pretrained: False
-# Base name identifying the run
-basename: default
+model: MLP_MNIST # Pretrained model defined in models.load_pretrained_model.
+metric: accuracy # Metric to be used for evaluating the model before and after finetune. Currently supports "accuracy" (for mnist) and "llm_tasks" (for llm).
+run_baseline: False # If True, calculates metric on the base model. If False, applies unadapt and calculate metric on anadapt model.
+# Wandb run name identifying the run
+basename: default # run for calculating metric on the base model. If run_baseline is True, this will be the run name. If run_baseline is False, this will used to retrieve metrics for baseline from wandb.
+unadaptname: default # run for calculating metric on the unadapt model. If run_baseline is False, this will be the run name.
+
+# wandb run name will be f"{cfg.basename}: baseline" if cfg.run_baseline else '{cfg.basename}: {cfg.unadaptname}'
