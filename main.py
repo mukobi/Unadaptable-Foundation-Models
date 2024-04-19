@@ -33,33 +33,42 @@ def main(cfg: DictConfig):
     logger.info("Loading model")
     model_base = models.load_model(wandb.config.model, logger)
 
-    logger.info("Running unadapt methods")
-    unadapt_method = unadapt.get_unadapt_method(wandb.config.unadapt.method)
-    model_unadapted = unadapt_method(model_base, wandb.config.unadapt)
+    if wandb.config.unadapt:
+        logger.info("Running unadapt methods")
+        unadapt_method = unadapt.get_unadapt_method(wandb.config.unadapt.method)
+        model_unadapted = unadapt_method(model_base, wandb.config.unadapt)
 
-    logger.info("Benchmarking unadapted model for relative pre-training performance")
-    pretrain_score.run_benchmark(
-        model_unadapted, wandb.config.pretrain, countermeasures=False, logger=logger
-    )
+        logger.info("Benchmarking unadapted model for relative pre-training performance")
+        pretrain_score.run_benchmark(
+            model_unadapted, wandb.config.pretrain, countermeasures=False, logger=logger
+        )
 
-    logger.info("Run basic countermeasures")
-    model_unadapted = countermeasures.run_countermeasures(
-        model_unadapted, wandb.config.countermeasures, logger
-    )
+        logger.info("Run basic countermeasures")
+        model_unadapted = countermeasures.run_countermeasures(
+            model_unadapted, wandb.config.countermeasures, logger
+        )
 
-    logger.info(
-        "Benchmarking countermeasured model for relative pre-training performance"
-    )
-    pretrain_score.run_benchmark(
-        model_unadapted, wandb.config.pretrain, countermeasures=True, logger=logger
-    )
+        logger.info(
+            "Benchmarking countermeasured model for relative pre-training performance"
+        )
+        pretrain_score.run_benchmark(
+            model_unadapted, wandb.config.pretrain, countermeasures=True, logger=logger
+        )
 
-    logger.info("Fine-tuning and recording results")
-    # TODO -- build this
-    ft_val_losses = fine_tuning.run_fine_tune(
-        model_unadapted, wandb.config.finetune, logger
-    )
+        logger.info("Fine-tuning and recording results for unadapted model")
+        ft_val_losses = fine_tuning.run_fine_tune(
+            model_unadapted, wandb.config.finetune, logger
+        )
 
+    else:
+        # Just fine-tune the base model
+        logger.info("No unadaptability methods provided")
+        logger.info("Fine-tuning and recording results for base model")
+        ft_val_losses = fine_tuning.run_fine_tune(
+            model_base, wandb.config.finetune, logger
+        )
+
+    # TODO -- Does this make sense for the fine-tune-only base model situation?
     logger.info("Calculating final unadaptability metrics")
     metrics.calculate_unadaptability_metrics(...)
 

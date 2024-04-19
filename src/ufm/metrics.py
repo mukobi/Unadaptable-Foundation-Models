@@ -40,7 +40,7 @@ def calculate_unadaptability_metrics(
     _, ufm_pre_acc = test(ufm_model, device, pre_test_loader)
 
     # Finetune unadaptable model on finetuning dataset
-    # TODO -- Move to finetraining module
+    # TODO -- Move to fine_tuning module
     # ufm_fine_losses = train(
     #     ufm_model,
     #     device,
