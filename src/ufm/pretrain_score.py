@@ -16,20 +16,19 @@ __author__ = "owen-yeung"
 
 def run_benchmark(
     model_unadapted,
-    wandb_config_pretrain_UNIMPLEMENTED=None,
+    configs,
     countermeasures=False,  # countermeasures to reduce the efficacy of unadpt method?
     logger: Logger = None,
 ):
     """
-    [IN DEVELOPMENT]
+    [UNTESTED, IN DEVELOPMENT]
     Runs Open LLM Leaderboard tasks on model and logs results to wandb.
-    wandb.config and countermeasures are not implemented yet (though they are called in the main.py skeleton)
-    This function has not been tested. Please contact owen-yeung if any bugs show up.
+    No configs have been implmented yet
+    This function has not been tested. Please contact owen-yeung if any bugs show up or you need new features supported
 
     Note:
     - make sure to login to wandb before running this function
     """
-    # TODO: Implement base functionality with lm_eval, forget about the other params for now
 
     # indexes all tasks from the `lm_eval/tasks` subdirectory.
     # Alternatively, you can set `TaskManager(include_path="path/to/my/custom/task/configs")`
@@ -61,9 +60,13 @@ def run_benchmark(
     if logger is not None:
         logger.info("Logging results to wandb...")
 
+    # Using project name to disambiguate between countermeasures and no countermeasures for now, 
+    # but there's probably a better way
+    project_name = "pretrain-scores-with-countermeasures" if countermeasures else "pretrain-scores-no-countermeasures"
+
     wandb_logger = WandbLogger(
-        project="lm-eval-harness-integration", job_type="eval"
-    )  # or empty if wandb.init(...) already called before
+        project=project_name, job_type="eval"
+    )  
     wandb_logger.post_init(results)
     wandb_logger.log_eval_result()
     wandb_logger.log_eval_samples(results["samples"])  # if log_samples
