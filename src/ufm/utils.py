@@ -6,7 +6,6 @@ import numpy as np
 from omegaconf import DictConfig, OmegaConf
 from omegaconf.errors import ValidationError
 from torch.optim.lr_scheduler import StepLR
-from enum import Enum
 
 from ufm.data import *
 from ufm.models import *
@@ -14,12 +13,6 @@ from ufm.unadapt import *
 
 
 logger = logging.getLogger()
-
-class Channel(Enum):
-    PRETRAIN: str = "pretrain"
-    UNADAPT: str = "unadapt"
-    COUNTERMEASURE: str = "countermeasure"
-    FINETUNE: str = "finetune"
 
 
 def validate_config(cfg: DictConfig) -> DictConfig:
@@ -40,21 +33,12 @@ def validate_config(cfg: DictConfig) -> DictConfig:
     else:
         raise ValidationError(f"Invalid value for 'verbosity': {verbosity}")
 
-    # Channels
-    if not cfg.channels:
-        logger.warning("No channels specified in config")
-    for ch in cfg.channels:
-        try:
-            Channel(ch)
-        except ValueError as ve:
-            raise ValidationError(ve)
-
     # Tags must be list if provided
     if isinstance(cfg.get("tags", None), str):
         cfg["tags"] = [cfg["tags"]]
 
-    # Print for debug
-    logger.debug(OmegaConf.to_yaml(cfg))
+    # Print info
+    logger.info(OmegaConf.to_yaml(cfg))
 
     return cfg
 
