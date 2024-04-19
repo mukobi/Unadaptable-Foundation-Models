@@ -38,6 +38,7 @@ def run_fine_tune(model_unadapted: HuggingFaceModel, configs, logger: Logger, tr
     # If no validation set create one
     if 'validation' not in dataset:
         dataset = dataset.train_test_split(test_size=0.1)
+        assert 'validation' in dataset
 
     if training_task == 'next-token-prediction':
         if dataset_identifier in ['cyber', 'pile']:
