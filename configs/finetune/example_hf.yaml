@@ -1,0 +1,15 @@
+# Description: Example configuration file for finetuning a model with the Hugging Face Trainer
+# To demonstrate the necessary fields for the configuration file
+# For reference only
+
+dataset: # cyber / harmfulqa / toxic / pile 
+# Supported identifiers are:
+#             - "cyber" for the 'cais/wmdp-corpora' dataset with the 'cyber-forget-corpus' subset.
+#             - "harmfulqa" for the 'declare-lab/HarmfulQA' dataset.
+#             - "toxic" for the 'allenai/real-toxicity-prompts' dataset.
+#             - "pile" for the 'NeelNanda/pile-10k' dataset.
+epochs: 
+lr: 
+batch_size: 
+test_batch_size: 
+

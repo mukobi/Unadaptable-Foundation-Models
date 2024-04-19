@@ -4,7 +4,7 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 import wandb
 
-from ufm import countermeasures, models, pretrain_score, unadapt, utils, metrics, finetuning
+from ufm import countermeasures, models, pretrain_score, unadapt, utils, metrics, fine_tuning
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="base_config")
@@ -66,7 +66,7 @@ def main(cfg: DictConfig):
     if utils.Channel.FINETUNE.value in cfg.channels:
         logger.info("Fine-tuning and recording results")
         # TODO -- build this
-        ft_val_losses = finetuning.run_fine_tune(
+        ft_val_losses = fine_tuning.run_fine_tune(
             model_unadapted, wandb.config.finetune, logger
         )
 
