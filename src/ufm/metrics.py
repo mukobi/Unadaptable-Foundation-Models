@@ -48,10 +48,10 @@ def calculate_unadaptability_metrics(
     
     base_run = base_runs[0]
     
-    print(base_run.summary["finetune/train_loss"])
+    print(base_run.summary["eval_loss"])
 
     losses_base = [
-        row["finetune/train_loss"] for row in base_run.scan_history(keys=["finetune/train_loss"])
+        row["eval_loss"] for row in base_run.scan_history(keys=["eval_loss"])
     ]
     
     loss_gap_ratio = calculate_loss_gap_ratio(losses_unadapt, losses_base)
