@@ -4,7 +4,7 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 import wandb
 
-from src.ufm import countermeasures, models, unadapt, utils, metrics, fine_tuning
+from ufm import countermeasures, models, unadapt, utils, metrics, fine_tuning
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="base_config")

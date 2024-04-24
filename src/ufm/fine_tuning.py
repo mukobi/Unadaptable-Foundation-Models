@@ -9,8 +9,8 @@ from logging import Logger
 import wandb
 
 
-from src.ufm.data import get_hf_data
-from src.ufm.models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
+from ufm.data import get_hf_data
+from ufm.models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
 from omegaconf.errors import ValidationError
 
 if TYPE_CHECKING:
@@ -91,7 +91,7 @@ def run_fine_tune(
 
         # TODO training_args should take in relevant config
         training_args = TrainingArguments(
-            report_to="wandb",
+            #report_to="wandb", by default it reports to all connected loggers
             evaluation_strategy="steps",
             eval_steps="10",
         )
@@ -119,9 +119,7 @@ def run_fine_tune(
         logger.info("Fine-tuning model...")
         trainer.train()
 
-        logger.info("Evaluating model...")
         #eval_results = trainer.evaluate()
-        trainer.save_model()
         eval_loss = trainer.state.log_history['eval_loss']
 
         return eval_loss  # validation loss for fine-tuning
@@ -149,13 +147,3 @@ def run_fine_tune(
 #     )
 
 #     trainer.train()
-
-def calculate_unadaptability_metrics(
-    ft_val_losses,
-    config,
-    logger,
-) -> None:
-    '''
-    Calculate and log metrics to wandb
-    '''
-    pass
