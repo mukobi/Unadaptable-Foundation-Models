@@ -1,0 +1,5 @@
+dataset: FashionMNIST
+epochs: 1
+lr: 0.001
+batch_size: 128
+test_batch_size: 1000

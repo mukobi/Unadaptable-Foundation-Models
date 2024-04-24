@@ -8,7 +8,7 @@ from transformers import AutoModel, AutoTokenizer
 class MLPNet(nn.Module):
     """N-layer MLP model with dropout."""
 
-    def __init__(self, hidden_layer_dims=[1024, 1024], dropout=0.2):
+    def __init__(self, hidden_layer_dims=(1024, 1024), dropout=0.2):
         super(MLPNet, self).__init__()
         # Dynamically create layers based on hidden_layer_dims
         prev_dim = 784

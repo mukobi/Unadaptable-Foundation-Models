@@ -1,33 +1,11 @@
-# General
-seed: 0
-model: MLP
-pretrained: False
+# Special hydra param, inherit defaults from base_config.yaml
+defaults:
+  - base_config
+  # Notice the keywords below match config dirs
+  - pretrain: mnist
+  - unadapt: gradient
+  - /finetune/fashion
+  - _self_
 
-# Pretraining
-pretrain:
-  dataset: MNIST
-  epochs: 8
-  lr: 0.001
-  batch_size: 128
-  test_batch_size: 1000
-
-# Finetuning
-finetune:
-  dataset: FashionMNIST
-  epochs: 1
-  lr: 0.001
-  batch_size: 128
-  test_batch_size: 1000
-
-# Unadaptability methods
-unadapt:
-  # - method: 'prune'
-  #   prune_percentage: 0.7
-  # - method: 'rescale'
-  #   rescale_factor: 1000000
-  - method: 'gradient'
-    loss: 'fim'
-    reduce: 'trace_max'
-    lam: 0.1
-    lr: 0.001
-    epochs: 1
+# Base name identifying the run
+basename: mnist

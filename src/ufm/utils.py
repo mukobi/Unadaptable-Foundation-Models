@@ -1,21 +1,54 @@
-from functools import partial
+import logging
+import random
 
 import numpy as np
-import torch
+
 from omegaconf import DictConfig, OmegaConf
-from torch import optim
-from torch.nn import functional as F
+from omegaconf.errors import ValidationError
 from torch.optim.lr_scheduler import StepLR
-from tqdm import tqdm
 
-from data import *
-from models import *
-from unadapt import *
+from ufm.data import *
+from ufm.models import *
+from ufm.unadapt import *
 
 
-def seed_all(seed):
+logger = logging.getLogger()
+
+
+def validate_config(cfg: DictConfig) -> DictConfig:
+    """
+    Apply suite of config validations, raising
+    """
+    # Logging
+    verbosity = cfg.get("verbosity", 1)
+    if verbosity == 2:
+        # Debug, most verbose
+        logger.setLevel(logging.DEBUG)
+    elif verbosity == 1:
+        # All but debug
+        logger.setLevel(logging.INFO)
+    elif verbosity == 0:
+        # Supress warnings; Most quiet; Still writes errors
+        logger.setLevel(logging.ERROR)
+    else:
+        raise ValidationError(f"Invalid value for 'verbosity': {verbosity}")
+
+    # Tags must be list if provided
+    if isinstance(cfg.get("tags", None), str):
+        cfg["tags"] = [cfg["tags"]]
+
+    # Print info
+    logger.info(OmegaConf.to_yaml(cfg))
+
+    return cfg
+
+
+def set_seed(seed: int) -> None:
+    """Set the seed for all random number generators."""
+    random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
@@ -50,14 +83,6 @@ def get_unadaptable_model(
         return apply_gradient_learning(model, unadapt_config, device, train_loader)
     else:
         raise NotImplementedError
-
-
-def load_config(config_path: str) -> DictConfig:
-    """Load a config file of a given path (absolute or relative to cwd)."""
-    conf = OmegaConf.load(config_path)
-    print(f"Loaded config from {config_path}")
-    print(OmegaConf.to_yaml(conf))
-    return conf
 
 
 def train(model, device, train_loader, num_epochs=1, learning_rate=1e-3, gamma=0.7):

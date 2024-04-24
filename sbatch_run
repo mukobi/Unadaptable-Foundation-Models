@@ -1,0 +1,11 @@
+#!/bin/bash
+#SBATCH --time=00:10:00  # time allocation, HH:MM:SS
+#SBATCH --nodes=1
+#SBATCH --partition=single
+#SBATCH --job-name=ufm  # job name for the allocation
+#SBATCH --output=logs/%x-%j.out
+
+# Run our UFM setup
+source ./setup.sh
+
+# python3 main.py
