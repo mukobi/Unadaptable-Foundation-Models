@@ -67,7 +67,7 @@ def run_fine_tune(
     # Load dataset
     logger.info(f"Loading dataset {config['dataset']} ...")
     dataset = get_hf_data(dataset_identifier) #TODO batch size config etc
-
+    print(dataset)
     # assert train splits exist
     assert 'train' in dataset
 

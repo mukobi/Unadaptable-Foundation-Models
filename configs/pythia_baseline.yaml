@@ -1,0 +1,11 @@
+# Special hydra param, inherit defaults from base_config.yaml
+defaults:
+  - base_config
+  # Notice the keywords below match config dirs
+  - unadapt: gradient
+  - /finetune/cyber
+  - _self_
+
+# Base name identifying the run
+basename: pythia_baseline
+run_baseline: true 

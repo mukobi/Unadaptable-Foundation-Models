@@ -1,15 +1,19 @@
 from logging import Logger
+import csv
+
 import numpy as np
 import wandb
 
 import lm_eval
 from lm_eval.logging_utils import WandbLogger
 
+from ufm.utils import get_base_benchmark_path, get_base_finetune_eval_loss_path
+
 
 """Metrics for evaluating unadaptability and relative pre-training performance."""
 
 
-def calculate_loss_gap_ratio(losses_unadapt, losses_base):
+def calculate_loss_gap_ratio(losses_unadapt: list[float], losses_base: list[float]) -> float:
     loss_max = losses_base[
         0
     ]  # Maximum loss, since you could always use the base model for the fine-tune task zero-shot
@@ -30,31 +34,28 @@ def calculate_loss_gap_ratio(losses_unadapt, losses_base):
 
 
 def calculate_unadaptability_metrics(
-    losses_unadapt: list[float], base_run_tag: str, logger: Logger
-):
+    losses_unadapt: list[float], baseline_metrics_path: str, model_name: str, logger: Logger
+) -> float:
     """
     Calculate the loss gap ratio.
-    Load in the val losses that already stored from fine-tuning the base model on wandb.
+    Load in the val losses stored from fine-tuning the base model. csv file.
     """
-    
-    api = wandb.Api()
-    base_runs = api.runs(f"unadaptable-foundation-models", filters={"tags": base_run_tag}, order='-created_at')
-    
-    if len(base_runs) == 0:
-        raise ValueError(f"No runs found with tag {base_run_tag}")
-    
-    if len(base_runs) > 1:
-        logger.warning(f"Multiple runs found with tag {base_run_tag}. Using the most recent one.")
-    
-    base_run = base_runs[0]
-    
-    print(base_run.summary["eval_loss"])
+    #TODO: Calculate relative pre-training/finetunting performance. Waiting for the implementation of run_benchmark
+    # Load in the val losses that already stored from fine-tuning the base model on disk
 
-    losses_base = [
-        row["eval_loss"] for row in base_run.scan_history(keys=["eval_loss"])
-    ]
+    with open(get_base_finetune_eval_loss_path(baseline_metrics_path, model_name), "r") as f:
+        losses_base = list(csv.reader(f))
     
+    with open(get_base_benchmark_path(baseline_metrics_path, model_name, "pretrained"), "r") as f:
+        benchmark_pretrained = list(csv.reader(f))
+    
+    with open(get_base_benchmark_path(baseline_metrics_path, model_name, "finetuned"), "r") as f:
+        benchmark_finetuned = list(csv.reader(f))
+    
+    # Calculate loss gap ratio
     loss_gap_ratio = calculate_loss_gap_ratio(losses_unadapt, losses_base)
+    
+    # TODO: calculate relative pre-training/finetuning performance. Need more parameters to be passed in. ex. benchmark_unadapt, benchmark_unadapt_finetuned
     
     wandb.log({f"unadaptability_metrics/loss_gap_ratio": loss_gap_ratio})
     logger.info(f"Loss gap ratio: {loss_gap_ratio:.6f}")
@@ -78,6 +79,7 @@ def run_benchmark(
     Note:
     - make sure to login to wandb before running this function
     """
+    return
     # TODO: Implement base functionality with lm_eval, forget about the other params for now
 
     # indexes all tasks from the `lm_eval/tasks` subdirectory.

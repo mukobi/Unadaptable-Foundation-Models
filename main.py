@@ -1,4 +1,6 @@
 import logging
+import random
+import csv
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -18,9 +20,9 @@ def main(cfg: DictConfig):
         # Convert config to dict type
         config=OmegaConf.to_container(cfg, resolve=True),
         mode="disabled" if cfg.disable_wandb else "online",
-        tags=[cfg.basename if cfg.run_baseline else cfg.unadaptname], # when retrieving baseline result, we search for the latest run with the basename tag. (it might be better to search with run id to ensure uniqueness) 
         save_code=True,
-        name=cfg.basename if cfg.run_baseline else cfg.unadaptname,
+        tags=cfg.get("tags", None),
+        #name=cfg.basename if cfg.get('basename') else None,
         dir=".",
     )
 
@@ -29,7 +31,7 @@ def main(cfg: DictConfig):
     logger = logging.getLogger()
 
     # Check for base model metrics already saved unless undapt method is blank
-    base_metrics_saved = utils.check_base_results_saved(wandb.config.basename)
+    base_metrics_saved = utils.check_base_results_saved(wandb.config.baseline_metrics_path, wandb.config.model)
     
     if not base_metrics_saved and not cfg.run_baseline:
         logger.error("Base model metrics not found. Please first run baseline by setting run_baseline to True.")
@@ -40,16 +42,25 @@ def main(cfg: DictConfig):
         model_base = models.HuggingFaceModel(wandb.config.model)
         
         logger.info("Benchmarking base model for relative pre-training performance")
-        metrics.run_benchmark(model_base, wandb.config.metric, "base_model/llm_benchmark", logger)
-        fine_tuning.run_fine_tune(
+        metrics.run_benchmark(model_base, logger, "base")
+        ft_val_losses = fine_tuning.run_fine_tune(
             model_base, wandb.config.finetune, logger
         )
+        with open(utils.get_base_finetune_eval_loss_path(wandb.config.baseline_metrics_path, wandb.config.model), "w") as f:
+            writer = csv.writer(f)
+            writer.writerow(ft_val_losses)
         
         logger.info("Benchmarking finetuned model for relative fintuning performance")
-        metrics.run_benchmark(model_base, wandb.config.metric, "finetuned_base_model/llm_benchmark", logger)
+        metrics.run_benchmark(model_base, logger, "finetuned")
         
+        logger.info("Calculating final unadaptability metrics for testing purpose.")
+        loss_gap_ratio = metrics.calculate_unadaptability_metrics(ft_val_losses, wandb.config.baseline_metrics_path, wandb.config.model, logger)
+
+        logger.info("This is baseline run, loss gap ratio should be zero.")
+        logger.info(f"Final loss gap ratio: {loss_gap_ratio:.6f}")
         logger.info("Done!")
-        return 
+    
+    
     
     logger.info("Loading model")
     model_base = models.HuggingFaceModel(wandb.config.model)
@@ -60,36 +71,35 @@ def main(cfg: DictConfig):
 
     logger.info("Benchmarking unadapted model for relative pre-training performance")
     metrics.run_benchmark(
-        model_unadapted, countermeasures=False, logger=logger
+        model_unadapted, logger, "unadapted"
     )
 
     logger.info("Run basic countermeasures")
     model_unadapted = countermeasures.run_countermeasures(
         model_unadapted, wandb.config.countermeasures, logger
     )
-
-    logger.info(
-        "Benchmarking countermeasured model for relative pre-training performance"
-    )
-    metrics.run_benchmark(
-        model_unadapted, countermeasures=True, logger=logger
-    )
+    
+    # logger.info(
+    #     "Benchmarking countermeasured model for relative pre-training performance"
+    # )
+    # metrics.run_benchmark(
+    #     model_unadapted, logger, "countermeasured"
+    # )
 
     logger.info("Fine-tuning and recording results for unadapted model")
     ft_val_losses = fine_tuning.run_fine_tune(
         model_unadapted, wandb.config.finetune, logger
     )
 
-    # Just fine-tune the base model
-    logger.info("No unadaptability methods provided")
-    logger.info("Fine-tuning and recording results for base model")
-    ft_val_losses = fine_tuning.run_fine_tune(
-        model_base, wandb.config.finetune, logger
+    logger.info("Benchmarking finetuned model for relative fintuning performance")
+    metrics.run_benchmark(
+        model_unadapted, logger, "unadapted_finetuned"
     )
-
-    # TODO -- Does this make sense for the fine-tune-only base model situation?
+    
     logger.info("Calculating final unadaptability metrics")
-    metrics.calculate_unadaptability_metrics(ft_val_losses, wandb.config.basename, logger)
+    loss_gap_ratio = metrics.calculate_unadaptability_metrics(ft_val_losses, wandb.config.baseline_metrics_path, wandb.config.model, logger)
+
+    logger.info(f"Final loss gap ratio: {loss_gap_ratio:.6f}")
 
     logger.info("Done!")
 

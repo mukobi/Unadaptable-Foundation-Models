@@ -144,15 +144,24 @@ def test(model, device, test_loader):
 
     return test_loss, correct / len(test_loader.dataset)
 
-def check_base_results_saved(basename):
-    api = wandb.Api()
-    base_runs = api.runs(f"unadaptable-foundation-models", filters={"tags": basename}, order='-created_at')
+def get_base_finetune_eval_loss_path(results_path: str, model_name: str) -> str:
+    return f"{results_path}/{model_name}/finetune_eval_loss.csv"
+
+def get_base_benchmark_path(results_path: str, model_name: str, model_stage: str) -> str:
+    """
+    Returns the path to the base benchmark file for the given model.
+    Parameters:
+    - model_name: The name of the model.
+    - results_path: The path to the directory containing the results.
+    - model_stage: The stage of the model "pretrained", "finetuned"
+    """
+    return f"{results_path}/{model_name}/{model_stage}_benchmark.csv"
+
+def check_base_results_saved(baseline_metrics_path, model_name: str,) -> bool:
+    finetune_loss_exist = os.path.exists(get_base_finetune_eval_loss_path(model_name, baseline_metrics_path))
+    pretrained_benchmark_exist = os.path.exists(get_base_benchmark_path(model_name, baseline_metrics_path, "pretrained"))
+    finetuned_benchmark_exist = os.path.exists(get_base_benchmark_path(model_name, baseline_metrics_path, "finetuned"))
     
-    if len(base_runs) == 0:
-        return False
-    
-    if len(base_runs) > 1:
-        logger.warning(f"Multiple runs found with tag {basename}. Using the most recent one.")
-    
-    
-    return True
+    # return finetune_loss_exist and pretrained_benchmark_exist and finetuned_benchmark_exist
+    # until run_benchmark is implemented 
+    return finetune_loss_exist
