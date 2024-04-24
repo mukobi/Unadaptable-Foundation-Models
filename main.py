@@ -4,7 +4,7 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 import wandb
 
-from ufm import countermeasures, models, pretrain_score, unadapt, utils, metrics, fine_tuning
+from src.ufm import countermeasures, models, unadapt, utils, metrics, fine_tuning
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="base_config")
@@ -21,7 +21,6 @@ def main(cfg: DictConfig):
         tags=[cfg.basename if cfg.run_baseline else cfg.unadaptname], # when retrieving baseline result, we search for the latest run with the basename tag. (it might be better to search with run id to ensure uniqueness) 
         save_code=True,
         name=cfg.basename if cfg.run_baseline else cfg.unadaptname,
-        save_code=True,
         dir=".",
     )
 
@@ -38,7 +37,7 @@ def main(cfg: DictConfig):
     
     if cfg.run_baseline:
         logger.info("Running baseline")
-        model_base = models.load_model(wandb.config.model, logger, wandb.config.pretrain)
+        model_base = models.HuggingFaceModel(wandb.config.model)
         
         logger.info("Benchmarking base model for relative pre-training performance")
         metrics.run_benchmark(model_base, wandb.config.metric, "base_model/llm_benchmark", logger)
@@ -53,7 +52,7 @@ def main(cfg: DictConfig):
         return 
     
     logger.info("Loading model")
-    model_base = models.load_model(wandb.config.model, logger)
+    model_base = models.HuggingFaceModel(wandb.config.model)
 
     logger.info("Running unadapt methods")
     unadapt_method = unadapt.get_unadapt_method(wandb.config.unadapt.method)

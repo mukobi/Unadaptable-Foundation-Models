@@ -9,8 +9,8 @@ from logging import Logger
 import wandb
 
 
-from ufm.data import get_hf_data
-from ufm.models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
+from src.ufm.data import get_hf_data
+from src.ufm.models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
 from omegaconf.errors import ValidationError
 
 if TYPE_CHECKING:
