@@ -12,7 +12,6 @@ from ufm.utils import get_base_benchmark_path, get_base_finetune_eval_loss_path
 
 """Metrics for evaluating unadaptability and relative pre-training performance."""
 
-
 def calculate_loss_gap_ratio(losses_unadapt: list[float], losses_base: list[float]) -> float:
     loss_max = losses_base[
         0

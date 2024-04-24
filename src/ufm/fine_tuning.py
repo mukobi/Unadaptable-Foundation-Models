@@ -1,17 +1,20 @@
-'''
+"""
 Scripts for fine-tuning on the harmful datasets
-'''
-from typing import TYPE_CHECKING
-from datasets import load_dataset, Dataset
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from transformers import TrainingArguments, Trainer
+"""
 from logging import Logger
-import wandb
+from typing import TYPE_CHECKING
 
+
+import wandb
 
 from ufm.data import get_hf_data
 from ufm.models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
+
 from omegaconf.errors import ValidationError
+from transformers import Trainer, TrainingArguments
+
+from models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
+from ufm.data import get_hf_data
 
 if TYPE_CHECKING:
     from omegaconf import DictConfig
@@ -67,7 +70,7 @@ def run_fine_tune(
     # Load dataset
     logger.info(f"Loading dataset {config['dataset']} ...")
     dataset = get_hf_data(dataset_identifier) #TODO batch size config etc
-    print(dataset)
+    
     # assert train splits exist
     assert 'train' in dataset
 
@@ -128,22 +131,3 @@ def run_fine_tune(
         raise NotImplementedError(
             f"Only supervised-fine-tuning fine-tuning is supported for now. Got {training_task} instead."
         )
-
-
-# def run_fine_tune(
-#         model,
-#         train_dataset: Dataset,
-#         args: TrainingArguments,
-#         tokenizer: AutoTokenizer,
-#         # eval_dataset: Dataset,
-#         ) -> None:
-
-#     trainer = Trainer(
-#         model=model,
-#         args=args,
-#         train_dataset=train_dataset,
-#         # eval_dataset=eval_dataset,
-#         tokenizer=tokenizer,
-#     )
-
-#     trainer.train()

@@ -5,9 +5,9 @@ import csv
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
-import wandb
 
-from ufm import countermeasures, models, unadapt, utils, metrics, fine_tuning
+import wandb
+from ufm import countermeasures, fine_tuning, metrics, models, pretrain_score, unadapt, utils
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="base_config")

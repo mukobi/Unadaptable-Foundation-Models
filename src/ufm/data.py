@@ -72,7 +72,7 @@ def get_fashion_mnist_data(
 
 
 def get_hf_data(
-    dataset_identifier: str, # Dataset name and subset name
+    dataset_identifier: str,  # Dataset name and subset name
     # batch_size: int = 128, 
     # test_batch_size: int = 100,
 ) -> huggingface_datasets.Dataset:
@@ -98,12 +98,12 @@ def get_hf_data(
         - For the "harmfulqa", "toxic", and "pile" datasets, there is no subset name and the split is 'train'.
         - If you would like to add support for a new dataset, please contact owen-yeung.
     """
-    
+
     if dataset_identifier == "cyber":
         dataset_name = 'cais/wmdp-corpora'
-        subset_name = 'cyber-forget-corpus' # only 1k rows, test_batch shouldn't exceed
+        subset_name = 'cyber-forget-corpus'  # only 1k rows, test_batch shouldn't exceed
         split = 'train'
-        
+
     elif dataset_identifier == "harmfulqa":
         dataset_name = 'declare-lab/HarmfulQA'
         subset_name = None
@@ -113,7 +113,7 @@ def get_hf_data(
         dataset_name = 'allenai/real-toxicity-prompts'
         subset_name = None
         split = 'train'
-    
+
     elif dataset_identifier == "pile":
         dataset_name = 'NeelNanda/pile-10k'
         subset_name = None
@@ -124,9 +124,9 @@ def get_hf_data(
             'Dataset identifier not recognized. See docstring for supported identifiers.'
             'Contact owen-yeung if you would like a new dataset supported.'
         )
-    
+
     dataset = huggingface_datasets.load_dataset(dataset_name, subset_name)
-    
+
     # data_loader = torch.utils.data.DataLoader(
     #     dataset,
     #     batch_size=batch_size,
@@ -134,9 +134,6 @@ def get_hf_data(
     # )
 
     return dataset
-    
-    
-
 
 # def DEPRECATED_get_huggingface_data(
 #     dataset_path: str,
@@ -152,7 +149,7 @@ def get_hf_data(
 #     - Pile
 
 #     [DEPRECATED DOCSTRING]
-    
+
 #     Loads a dataset from Hugging Face Datasets library and returns train and test data loaders. Validation set not supported.
 #     If only train split is available, the data is split into train and test sets based on the test_num_rows parameter. 
 
@@ -178,7 +175,7 @@ def get_hf_data(
 #         num_rows = len(dataset['train'])
 #         train_num_rows = num_rows - test_num_rows
 #         assert batch_size <= train_num_rows, 'batch_size must be less than or equal to the number of rows in the train set.'
-    
+
 #         train_set = dataset['train'].select(range(train_num_rows))
 #         test_set = dataset['train'].select(range(train_num_rows, num_rows))
 

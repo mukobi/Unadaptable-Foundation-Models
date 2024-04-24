@@ -2,16 +2,15 @@ import logging
 import random
 
 import numpy as np
-
+import torch
 from omegaconf import DictConfig, OmegaConf
 from omegaconf.errors import ValidationError
+from torch.nn import functional as F
 from torch.optim.lr_scheduler import StepLR
 import wandb
 
-from ufm.data import *
-from ufm.models import *
-from ufm.unadapt import *
-
+import ufm.data as udata
+import ufm.models as umodels
 
 logger = logging.getLogger()
 
@@ -56,7 +55,7 @@ def set_seed(seed: int) -> None:
 
 def get_model(model_name: str, device="cuda"):
     if model_name.lower() == "mlp":
-        model = MLPNet().to(device)
+        model = umodels.MLPNet().to(device)
     else:
         raise NotImplementedError
     return model
@@ -64,24 +63,9 @@ def get_model(model_name: str, device="cuda"):
 
 def get_dataset(dataset_name: str, batch_size: int = 64, test_batch_size: int = 1000):
     if dataset_name.lower() == "mnist":
-        return get_mnist_data(batch_size, test_batch_size)
+        return udata.get_mnist_data(batch_size, test_batch_size)
     elif dataset_name.lower() == "fashionmnist":
-        return get_fashion_mnist_data(batch_size, test_batch_size)
-    else:
-        raise NotImplementedError
-
-
-def get_unadaptable_model(
-    model: nn.Module, unadapt_config: DictConfig, device, train_loader
-) -> nn.Module:
-    if unadapt_config.method == "prune":
-        return apply_pruning(model, unadapt_config.prune_percentage)
-    elif unadapt_config.method == "rescale":
-        return apply_weight_rescaling(model, unadapt_config.rescale_factor)
-    elif unadapt_config.method == "zeroth":
-        return apply_zeroth_order_learning(model, unadapt_config, device, train_loader)
-    elif unadapt_config.method == "gradient":
-        return apply_gradient_learning(model, unadapt_config, device, train_loader)
+        return udata.get_fashion_mnist_data(batch_size, test_batch_size)
     else:
         raise NotImplementedError
 
@@ -93,11 +77,11 @@ def train(model, device, train_loader, num_epochs=1, learning_rate=1e-3, gamma=0
     Returns a list of losses.
     """
 
-    optimizer = optim.AdamW(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
     scheduler = StepLR(optimizer, step_size=1, gamma=gamma)
     model.train()
     num_total_batches = len(train_loader) * num_epochs
-    progress_bar = tqdm(total=num_total_batches, position=0, leave=True)
+    progress_bar = torch.tqdm(total=num_total_batches, position=0, leave=True)
     losses = []
     for epoch in range(1, num_epochs + 1):
         for data, target in train_loader:
@@ -111,7 +95,7 @@ def train(model, device, train_loader, num_epochs=1, learning_rate=1e-3, gamma=0
             losses.append(loss.item())
         if epoch % 1 == 0 or epoch == num_epochs:
             # Avg loss over this epoch
-            avg_loss = sum(losses[-len(train_loader) :]) / len(train_loader)
+            avg_loss = sum(losses[-len(train_loader):]) / len(train_loader)
             print(
                 f"Train Epoch: {epoch}/{num_epochs} ({100 * epoch / num_epochs:.2f}%) Average Loss: {avg_loss:.6f}"
             )
