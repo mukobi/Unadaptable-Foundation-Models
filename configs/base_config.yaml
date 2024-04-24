@@ -7,10 +7,3 @@ verbosity: 1  # [0, 1, 2] of increasing verbosity
 disable_wandb: false  # Disable WandB online integration
 model: MLP
 pretrained: False
-
-# Channels to execute; See utils.py
-channels:
-  - pretrain
-  - unadapt
-  - countermeasure
-  - finetune
