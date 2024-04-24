@@ -1,11 +1,14 @@
 # Run meta
 seed: 0
-basename: default  # Base name identifying the run
+basename: baseline # run for calculating metric on the base model. If run_baseline is True, this will be the run name. If run_baseline is False, this will used to retrieve metrics for baseline from wandb.
+unadaptname: prune # run for calculating metric on the unadapt model. If run_baseline is False, this will be the run name.
+
 device: ~  # "cpu" or "cuda"; defaults to cuda if available
 dry_run: false  # Dry run for debugging
 verbosity: 1  # [0, 1, 2] of increasing verbosity
 disable_wandb: false  # Disable WandB online integration
 model: MLP
+run_baseline: false # If True, calculates metric on the base model. If False, applies unadapt and calculate metric on anadapt model
 
 # Channels to execute; See utils.py
 channels:

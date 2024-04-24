@@ -7,8 +7,10 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import TrainingArguments, Trainer
 from logging import Logger
 import wandb
-from data import get_hf_data
-from models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
+
+
+from ufm.data import get_hf_data
+from ufm.models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
 from omegaconf.errors import ValidationError
 
 if TYPE_CHECKING:
@@ -88,7 +90,11 @@ def run_fine_tune(
         eval_dataset = tokenized_datasets["validation"].shuffle(seed=42)
 
         # TODO training_args should take in relevant config
-        training_args = TrainingArguments()
+        training_args = TrainingArguments(
+            report_to="wandb",
+            evaluation_strategy="steps",
+            eval_steps="10",
+        )
 
         # training_args with relevant config
         # training_args = TrainingArguments(
@@ -114,9 +120,11 @@ def run_fine_tune(
         trainer.train()
 
         logger.info("Evaluating model...")
-        eval_results = trainer.evaluate()
+        #eval_results = trainer.evaluate()
+        trainer.save_model()
+        eval_loss = trainer.state.log_history['eval_loss']
 
-        return eval_results['eval_loss']  # validation loss for fine-tuning
+        return eval_loss  # validation loss for fine-tuning
 
     else:
         raise NotImplementedError(

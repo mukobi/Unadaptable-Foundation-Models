@@ -1,5 +1,0 @@
-dataset: MNIST
-epochs: 8
-lr: 0.001
-batch_size: 128
-test_batch_size: 1000

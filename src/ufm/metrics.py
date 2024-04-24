@@ -1,3 +1,11 @@
+from logging import Logger
+import numpy as np
+import wandb
+
+import lm_eval
+from lm_eval.logging_utils import WandbLogger
+
+
 """Metrics for evaluating unadaptability and relative pre-training performance."""
 
 
@@ -20,34 +28,85 @@ def calculate_loss_gap_ratio(losses_unadapt, losses_base):
     return loss_gap_ratio
 
 
+
 def calculate_unadaptability_metrics(
-    model,
-    unadapt_config,
-    device,
-    config,
-    pre_train_loader,
-    pre_test_loader,
-    fine_train_loader,
-    fine_test_loader,
+    losses_unadapt: list[float], base_run_tag: str, logger: Logger
 ):
-    # Make the model unadaptable; optionally use pretraining dataset
-    ufm_model = copy.deepcopy(model)
-    ufm_model = get_unadaptable_model(
-        ufm_model, unadapt_config, device, pre_train_loader
+    """
+    Calculate the loss gap ratio.
+    Load in the val losses that already stored from fine-tuning the base model on wandb.
+    """
+    
+    api = wandb.Api()
+    base_runs = api.runs(f"unadaptable-foundation-models", filters={"tags": base_run_tag}, order='-created_at')
+    
+    if len(base_runs) == 0:
+        raise ValueError(f"No runs found with tag {base_run_tag}")
+    
+    if len(base_runs) > 1:
+        logger.warning(f"Multiple runs found with tag {base_run_tag}. Using the most recent one.")
+    
+    base_run = base_runs[0]
+    
+    print(base_run.summary["finetune/train_loss"])
+
+    losses_base = [
+        row["finetune/train_loss"] for row in base_run.scan_history(keys=["finetune/train_loss"])
+    ]
+    
+    loss_gap_ratio = calculate_loss_gap_ratio(losses_unadapt, losses_base)
+    
+    wandb.log({f"unadaptability_metrics/loss_gap_ratio": loss_gap_ratio})
+    logger.info(f"Loss gap ratio: {loss_gap_ratio:.6f}")
+
+    return loss_gap_ratio
+
+
+
+
+def run_benchmark(
+        model_unadapted,
+        logger: Logger = None,
+        tag: str = None
+    ): 
+    """
+    [IN DEVELOPMENT]
+    Runs Open LLM Leaderboard tasks on model and logs results to wandb.
+    wandb.config and countermeasures are not implemented yet (though they are called in the main.py skeleton)
+    This function has not been tested. Please contact owen-yeung if any bugs show up.
+
+    Note:
+    - make sure to login to wandb before running this function
+    """
+    # TODO: Implement base functionality with lm_eval, forget about the other params for now
+
+    # indexes all tasks from the `lm_eval/tasks` subdirectory.
+    # Alternatively, you can set `TaskManager(include_path="path/to/my/custom/task/configs")`
+    # to include a set of tasks in a separate directory.
+    task_manager = lm_eval.tasks.TaskManager()
+
+    # Setting `task_manager` to the one above is optional and should generally be done
+    # if you want to include tasks from paths other than ones in `lm_eval/tasks`.
+    # `simple_evaluate` will instantiate its own task_manager is the it is set to None here.
+    if logger != None:
+        logger.info("Running Open LLM Leaderboard tasks on model...")
+
+    results = lm_eval.simple_evaluate( # call simple_evaluate
+        model=model_unadapted,
+        tasks=["arc", "hellaswag", "mmlu", "truthfulqa", "winogrande", "gsm8k"], # tasks from Open LLM leaderboard
+        num_fewshot=0,
+        task_manager=task_manager,
+        # ...
     )
 
-    # Calculate relative accuracy on pretraining test dataset
-    _, ufm_pre_acc = test(ufm_model, device, pre_test_loader)
 
-    # Finetune unadaptable model on finetuning dataset
-    # TODO -- Move to fine_tuning module
-    # ufm_fine_losses = train(
-    #     ufm_model,
-    #     device,
-    #     fine_train_loader,
-    #     config.finetune.epochs,
-    #     learning_rate=config.finetune.lr,
-    # )
-    # _, ufm_fine_acc = test(ufm_model, device, fine_test_loader)
+    # Log results to wandb
+    if logger != None:
+        logger.info("Logging results to wandb...")
 
-    return ufm_pre_acc, ufm_fine_acc, ufm_fine_losses
+    wandb_logger = WandbLogger(
+        project="lm-eval-harness-integration", job_type="eval"
+    )  # or empty if wandb.init(...) already called before
+    wandb_logger.post_init(results)
+    wandb_logger.log_eval_result()
+    wandb_logger.log_eval_samples(results["samples"])  # if log_samples

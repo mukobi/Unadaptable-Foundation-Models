@@ -6,6 +6,7 @@ import numpy as np
 from omegaconf import DictConfig, OmegaConf
 from omegaconf.errors import ValidationError
 from torch.optim.lr_scheduler import StepLR
+import wandb
 
 from ufm.data import *
 from ufm.models import *
@@ -142,3 +143,16 @@ def test(model, device, test_loader):
     )
 
     return test_loss, correct / len(test_loader.dataset)
+
+def check_base_results_saved(basename):
+    api = wandb.Api()
+    base_runs = api.runs(f"unadaptable-foundation-models", filters={"tags": basename}, order='-created_at')
+    
+    if len(base_runs) == 0:
+        return False
+    
+    if len(base_runs) > 1:
+        logger.warning(f"Multiple runs found with tag {basename}. Using the most recent one.")
+    
+    
+    return True
