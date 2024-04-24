@@ -38,6 +38,10 @@ def main(cfg: DictConfig):
         logger.error("Base model metrics not found. Please first run baseline by setting run_baseline to True.")
         raise ValueError("Base model metrics not found. Please first run baseline by setting run_baseline to True.")
     
+    if base_metrics_saved and cfg.run_baseline:
+        logger.error("Base model metrics already saved. Please set run_baseline to False.")
+        raise ValueError("Base model metrics already saved. Please set run_baseline to False.")
+    
     if cfg.run_baseline:
         logger.info("Running baseline")
         model_base = models.HuggingFaceModel(wandb.config.model)
@@ -48,7 +52,10 @@ def main(cfg: DictConfig):
             model_base, wandb.config.finetune, logger
         )
         # create a csv file to store the val losses
+        
+        
         file_name = utils.get_base_finetune_eval_loss_path(wandb.config.baseline_metrics_path, wandb.config.model)
+        logger.info(f"Saving base model val losses to disk: {file_name}")
         os.makedirs(os.path.dirname(file_name), exist_ok=True)
         with open(file_name, "w") as f:
             writer = csv.writer(f)
