@@ -73,9 +73,9 @@ def get_fashion_mnist_data(
 
 def get_hf_data(
     dataset_identifier: str, # Dataset name and subset name
-    batch_size: int = 128, 
+    # batch_size: int = 128, 
     # test_batch_size: int = 100,
-) -> torch.utils.data.DataLoader:
+) -> huggingface_datasets.Dataset:
     """
     Retrieves a DataLoader object for a given dataset identifier.
 
@@ -125,15 +125,15 @@ def get_hf_data(
             'Contact owen-yeung if you would like a new dataset supported.'
         )
     
-    dataset = huggingface_datasets.load_dataset(dataset_name, subset_name)[split]
+    dataset = huggingface_datasets.load_dataset(dataset_name, subset_name)
     
-    data_loader = torch.utils.data.DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=True,
-    )
+    # data_loader = torch.utils.data.DataLoader(
+    #     dataset,
+    #     batch_size=batch_size,
+    #     shuffle=True,
+    # )
 
-    return data_loader
+    return dataset
     
     
 def get_dataset(dataset_name: str, batch_size: int = 64, test_batch_size: int = 1000):

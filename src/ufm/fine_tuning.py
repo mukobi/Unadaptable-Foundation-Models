@@ -1,58 +1,117 @@
+'''
+Scripts for fine-tuning on the harmful datasets
+'''
+from datasets import load_dataset, Dataset
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import TrainingArguments, Trainer
 from logging import Logger
-
-import torch
-from torch import nn, optim
-import torch.nn.functional as F
-from torch.optim.lr_scheduler import StepLR
-from tqdm import tqdm
-
 import wandb
+from data import get_hf_data
+from models import HuggingFaceModel #HF model is a wrapper with model AND tokenizer
 from wandb.sdk.wandb_config import Config
 
-from src.ufm.data import get_dataset
+def run_fine_tune(model_unadapted: HuggingFaceModel, configs: Config, logger: Logger, training_task: str = 'next-token-prediction'):
+    '''
+    Fine tunes model_unadapted on the dataset specified in configs
+    Returns fine-tuning validation losses
+    Only supports next-token-prediction fine-tuning for now
+    Only supports text-only datasets (cyber and pile) for now
+    '''
+    # Assert configs has dataset name and is either 'cyber' or 'pile'
+    assert 'dataset' in configs and configs['dataset'] in ['cyber', 'pile']
+    dataset_identifier = configs['dataset']
 
-def run_fine_tune(model: nn.Module, device: str, config: Config, logger: Logger) -> list[float]:
-    """
-    Training function.
+    # Assert dataset column to fine tune on is specified
+    # assert 'column' in configs and configs['column'] is not None
 
-    Returns a list of losses.
-    """
-    #  num_epochs=1, learning_rate=1e-3, gamma=0.7
-    
-    num_epochs = config["epochs"]
-    learning_rate = config["lr"]
-    gamma = config["gamma"]
-    
-    train_loader, test_loader = get_dataset(
-        config["dataset"],
-        config["batch_size"],
-        config["test_batch_size"],
-    )
+    # column_name = configs['column']
 
+    tokenizer = model_unadapted.tokenizer
+    model = model_unadapted.model
 
-    optimizer = optim.AdamW(model.parameters(), lr=learning_rate)
-    scheduler = StepLR(optimizer, step_size=1, gamma=gamma)
-    model.train()
-    num_total_batches = len(train_loader) * num_epochs
-    progress_bar = tqdm(total=num_total_batches, position=0, leave=True)
-    losses = []
-    for epoch in range(1, num_epochs + 1):
-        for data, target in train_loader:
-            data, target = data.to(device), target.to(device)
-            optimizer.zero_grad()
-            output = model(data)
-            loss = F.nll_loss(output, target)
-            loss.backward()
-            optimizer.step()
-            progress_bar.update()
-            wandb.log({"finetune/train_loss": loss.item()})
-            losses.append(loss.item())
-        if epoch % 1 == 0 or epoch == num_epochs:
-            # Avg loss over this epoch
-            avg_loss = sum(losses[-len(train_loader) :]) / len(train_loader)
-            print(
-                f"Train Epoch: {epoch}/{num_epochs} ({100 * epoch / num_epochs:.2f}%) Average Loss: {avg_loss:.6f}"
-            )
-        scheduler.step()
-    progress_bar.close()
-    return losses
+    # Load dataset
+    logger.info(f"Loading dataset {configs['dataset']} ...")
+    dataset = get_hf_data(dataset_identifier) #TODO batch size configs etc
+
+    # assert train splits exist
+    assert 'train' in dataset
+
+    # If no validation set create one
+    if 'validation' not in dataset:
+        dataset = dataset.train_test_split(test_size=0.1)
+        assert 'validation' in dataset
+
+    if training_task == 'next-token-prediction':
+        if dataset_identifier in ['cyber', 'pile']:
+            column_name = 'text'
+        
+        def tokenize_function(examples):
+            #TODO check if padding and truncation are correct
+            return tokenizer(examples[column_name], padding="max_length", truncation=True)
+
+        tokenized_datasets = dataset.map(tokenize_function, batched=True)
+
+        train_dataset = tokenized_datasets["train"].shuffle(seed=42)
+        eval_dataset = tokenized_datasets["validation"].shuffle(seed=42)
+
+        #TODO training_args should take in relevant configs
+        training_args = TrainingArguments()
+
+        #training_args with relevant configs
+        # training_args = TrainingArguments(
+        #     output_dir="./results",
+        #     num_train_epochs=3,
+        #     per_device_train_batch_size=8,
+        #     per_device_eval_batch_size=8,
+        #     warmup_steps=500,
+        #     weight_decay=0.01,
+        #     logging_dir="./logs",
+        #     logging_steps=10,
+        # )
+
+        trainer = Trainer(
+            model=model,
+            training_args=training_args,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+            tokenizer=tokenizer,
+        )
+
+        logger.info("Fine-tuning model...")
+        trainer.train()
+
+        logger.info("Evaluating model...")
+        eval_results = trainer.evaluate()
+        
+        return eval_results['eval_loss'] #validation loss for fine-tuning
+
+    else:
+        raise NotImplementedError(f"Only next-token-prediction fine-tuning is supported for now. Got {training_task} instead.")
+
+# def run_fine_tune(
+#         model,
+#         train_dataset: Dataset,
+#         args: TrainingArguments,
+#         tokenizer: AutoTokenizer,
+#         # eval_dataset: Dataset,
+#         ) -> None:
+
+#     trainer = Trainer(
+#         model=model,
+#         args=args,
+#         train_dataset=train_dataset,
+#         # eval_dataset=eval_dataset,
+#         tokenizer=tokenizer,
+#     )
+
+#     trainer.train()
+
+def calculate_unadaptability_metrics(
+        ft_val_losses,
+        configs,
+        logger,
+    ) -> None:
+    '''
+    Calculate and log metrics to wandb
+    '''
+    pass
