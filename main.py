@@ -23,6 +23,10 @@ def main(cfg: DictConfig):
         dir=".",
     )
 
+    if wandb.config.testinit:
+        # If testing main initialization
+        return 0
+
     # Initialize seed and logger
     utils.set_seed(wandb.config.seed)
     logger = logging.getLogger()

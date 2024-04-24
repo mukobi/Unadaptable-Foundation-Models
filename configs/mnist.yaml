@@ -9,3 +9,5 @@ defaults:
 
 # Base name identifying the run
 basename: mnist
+
+early_terminate:

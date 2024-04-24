@@ -142,8 +142,10 @@ You can use the `+experiment` argument with hydra to specify a config that has a
 For example you might have an experiment config with overrides for a fast and small run in 
 `configs/experiment/fast_small.yaml`:
 ```bash
-python main.py --config-name=mnist +experiment=fast_small
+python main.py --config-name=mnist +experiment=fast_small  # Note we exclude ".yaml"
 ```
+
+
 Note:
 - Your experiment should exist in the `experiment` dir
 - Your conf should have `# @package _global_` at the top so that its parameters are imported at root level structure 

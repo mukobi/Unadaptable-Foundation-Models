@@ -7,9 +7,10 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import TrainingArguments, Trainer
 from logging import Logger
 import wandb
-from data import get_hf_data
-from models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
+# from models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
 from omegaconf.errors import ValidationError
+
+from ufm.data import get_hf_data
 
 if TYPE_CHECKING:
     from omegaconf import DictConfig
@@ -40,7 +41,8 @@ def validate_finetune_cfg(cfg: "DictConfig") -> "DictConfig":
 
 
 def run_fine_tune(
-    model_unadapted: HuggingFaceModel,
+    # model_unadapted: HuggingFaceModel,
+    model_unadapted,
     config: "DictConfig",
     logger: Logger,
     training_task: str = "supervised-fine-tuning"
