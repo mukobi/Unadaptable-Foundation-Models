@@ -40,13 +40,14 @@ def calculate_unadaptability_metrics(
     _, ufm_pre_acc = test(ufm_model, device, pre_test_loader)
 
     # Finetune unadaptable model on finetuning dataset
-    ufm_fine_losses = train(
-        ufm_model,
-        device,
-        fine_train_loader,
-        config.finetune.epochs,
-        learning_rate=config.finetune.lr,
-    )
-    _, ufm_fine_acc = test(ufm_model, device, fine_test_loader)
+    # TODO -- Move to fine_tuning module
+    # ufm_fine_losses = train(
+    #     ufm_model,
+    #     device,
+    #     fine_train_loader,
+    #     config.finetune.epochs,
+    #     learning_rate=config.finetune.lr,
+    # )
+    # _, ufm_fine_acc = test(ufm_model, device, fine_test_loader)
 
     return ufm_pre_acc, ufm_fine_acc, ufm_fine_losses

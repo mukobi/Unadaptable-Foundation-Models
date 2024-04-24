@@ -16,7 +16,11 @@ pip install -e ".[dev]"
 
 The `wandb` package allows for those with an account to visualize various information about their runs.
 However, using the package prompts users to enter their account login info (which they only need to do the first time).
-To disable this prompting (and online features), set `disable_wandb: true` in your config.
+To disable this prompting (and online features), set `disable_wandb: true` in your config or pass it in directly at 
+runtime 
+```bash
+python main.py disable_wandb=true
+````
 
 #### Sweeps
 See point 5 in Configs below.

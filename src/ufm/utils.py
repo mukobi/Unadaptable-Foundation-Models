@@ -1,12 +1,46 @@
+import logging
 import random
 
 import numpy as np
-from omegaconf import DictConfig
+
+from omegaconf import DictConfig, OmegaConf
+from omegaconf.errors import ValidationError
 from torch.optim.lr_scheduler import StepLR
 
 from ufm.data import *
 from ufm.models import *
 from ufm.unadapt import *
+
+
+logger = logging.getLogger()
+
+
+def validate_config(cfg: DictConfig) -> DictConfig:
+    """
+    Apply suite of config validations, raising
+    """
+    # Logging
+    verbosity = cfg.get("verbosity", 1)
+    if verbosity == 2:
+        # Debug, most verbose
+        logger.setLevel(logging.DEBUG)
+    elif verbosity == 1:
+        # All but debug
+        logger.setLevel(logging.INFO)
+    elif verbosity == 0:
+        # Supress warnings; Most quiet; Still writes errors
+        logger.setLevel(logging.ERROR)
+    else:
+        raise ValidationError(f"Invalid value for 'verbosity': {verbosity}")
+
+    # Tags must be list if provided
+    if isinstance(cfg.get("tags", None), str):
+        cfg["tags"] = [cfg["tags"]]
+
+    # Print info
+    logger.info(OmegaConf.to_yaml(cfg))
+
+    return cfg
 
 
 def set_seed(seed: int) -> None:

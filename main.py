@@ -4,7 +4,7 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 import wandb
 
-from ufm import countermeasures, fine_tuning, models, pretrain_score, unadapt, utils
+from ufm import countermeasures, models, pretrain_score, unadapt, utils, metrics, fine_tuning
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="base_config")
@@ -25,8 +25,7 @@ def main(cfg: DictConfig):
 
     # Initialize seed and logger
     utils.set_seed(wandb.config.seed)
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger()
 
     # Check for base model metrics already saved unless undapt method is blank
     utils.check_base_results_saved(wandb.config.model.path, wandb.config.unadapt)
@@ -34,38 +33,40 @@ def main(cfg: DictConfig):
     logger.info("Loading model")
     model_base = models.load_model(wandb.config.model, logger)
 
-    logger.info("Running unadapt methods")
-    unadapt_method = unadapt.get_unadapt_method(wandb.config.unadapt.method)
-    model_unadapted = unadapt_method(model_base, wandb.config.unadapt)
+    if wandb.config.unadapt:
+        logger.info("Running unadapt methods")
+        unadapt_method = unadapt.get_unadapt_method(wandb.config.unadapt.method)
+        model_unadapted = unadapt_method(model_base, wandb.config.unadapt)
 
-    logger.info("Benchmarking unadapted model for relative pre-training performance")
-    pretrain_score.run_benchmark(
-        model_unadapted, wandb.config.pretrain, countermeasures=False, logger=logger
-    )
+        logger.info("Benchmarking unadapted model for relative pre-training performance")
+        pretrain_score.run_benchmark(
+            model_unadapted, wandb.config.pretrain, countermeasures=False, logger=logger
+        )
 
-    logger.info("Run basic countermeasures")
-    model_unadapted = countermeasures.run_countermeasures(
-        model_unadapted, wandb.config.countermeasures, logger
-    )
+        logger.info("Run basic countermeasures")
+        model_unadapted = countermeasures.run_countermeasures(
+            model_unadapted, wandb.config.countermeasures, logger
+        )
 
-    logger.info(
-        "Benchmarking countermeasured model for relative pre-training performance"
-    )
-    pretrain_score.run_benchmark(
-        model_unadapted, wandb.config.pretrain, countermeasures=True, logger=logger
-    )
+        logger.info(
+            "Benchmarking countermeasured model for relative pre-training performance"
+        )
+        pretrain_score.run_benchmark(
+            model_unadapted, wandb.config.pretrain, countermeasures=True, logger=logger
+        )
+    else:
+        # Just fine-tune the base model
+        logger.info("No unadaptability methods provided")
+        model_unadapted = model_base
 
-    logger.info("Fine-tuning and recording results")
+    logger.info("Fine-tuning and recording results for base model")
     ft_val_losses = fine_tuning.run_fine_tune(
         model_unadapted, wandb.config.finetune, logger
     )
 
+    # TODO -- Does this make sense for the fine-tune-only base model situation?
     logger.info("Calculating final unadaptability metrics")
-    fine_tuning.calculate_unadaptability_metrics(
-        ft_val_losses,
-        wandb.config.model.path,
-        logger,
-    )
+    metrics.calculate_unadaptability_metrics(...)
 
     logger.info("Done!")
 
