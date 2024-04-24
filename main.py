@@ -23,7 +23,7 @@ def main(cfg: DictConfig):
         mode="disabled" if cfg.disable_wandb else "online",
         save_code=True,
         tags=cfg.get("tags", None),
-        #name=cfg.basename if cfg.get('basename') else None,
+        name=cfg.basename if cfg.get('basename') else None,
         dir=".",
     )
 
