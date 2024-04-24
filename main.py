@@ -61,7 +61,7 @@ def main(cfg: DictConfig):
 
     logger.info("Fine-tuning and recording results for base model")
     ft_val_losses = fine_tuning.run_fine_tune(
-        model_base, wandb.config.finetune, logger
+        model_unadapted, wandb.config.finetune, logger
     )
 
     # TODO -- Does this make sense for the fine-tune-only base model situation?
