@@ -1,10 +1,10 @@
 from logging import Logger
-import lm_eval
-import wandb
 
+import lm_eval
 from lm_eval.logging_utils import WandbLogger
 
 __author__ = "owen-yeung"
+
 
 # wandb.init(project=constants.WANDB_PROJECT, config=args)
 
@@ -66,7 +66,7 @@ def run_benchmark(
 
     wandb_logger = WandbLogger(
         project=project_name, job_type="eval"
-    )  
+    )
     wandb_logger.post_init(results)
     wandb_logger.log_eval_result()
     wandb_logger.log_eval_samples(results["samples"])  # if log_samples

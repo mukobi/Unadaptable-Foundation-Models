@@ -9,6 +9,21 @@ from torch.nn.utils import prune
 from tqdm import tqdm
 
 
+def get_unadaptable_model(
+    model: nn.Module, unadapt_config: DictConfig, device, train_loader
+) -> nn.Module:
+    if unadapt_config.method == "prune":
+        return apply_pruning(model, unadapt_config.prune_percentage)
+    elif unadapt_config.method == "rescale":
+        return apply_weight_rescaling(model, unadapt_config.rescale_factor)
+    elif unadapt_config.method == "zeroth":
+        return apply_zeroth_order_learning(model, unadapt_config, device, train_loader)
+    elif unadapt_config.method == "gradient":
+        return apply_gradient_learning(model, unadapt_config, device, train_loader)
+    else:
+        raise NotImplementedError
+
+
 def apply_pruning(model, prune_percentage):
     """Pruning function: prune linear layers."""
     parameters_to_prune = (
@@ -46,7 +61,7 @@ def compute_fim_loss(model, ref_model, data, target, lam, fim_reduce):
     kl_loss = torch.kl_div(output, ref_output.detach(), log_target=True).mean()
     params = dict(model.named_parameters())
     param_grad = grad(functional_loss_over_params(model, data, target))(params)
-    fim_trace = {k: v**2 for k, v in param_grad.items()}
+    fim_trace = {k: v ** 2 for k, v in param_grad.items()}
     if fim_reduce == "trace_max":
         fim = sum(map(torch.max, fim_trace.values())) / len(fim_trace)
     loss = kl_loss + lam * fim
