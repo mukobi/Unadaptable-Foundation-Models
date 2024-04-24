@@ -43,12 +43,12 @@ def run_fine_tune(
     model_unadapted: HuggingFaceModel,
     config: "DictConfig",
     logger: Logger,
-    training_task: str = 'next-token-prediction'
+    training_task: str = "supervised-fine-tuning"
 ):
     """
     Fine tunes model_unadapted on the dataset specified in config
     Returns fine-tuning validation losses
-    Only supports next-token-prediction fine-tuning for now
+    Only supports supervised-fine-tuning for now
     Only supports text-only datasets (cyber and pile) for now
 
     'config' is specifically the 'finetune' struct of global config
@@ -74,7 +74,7 @@ def run_fine_tune(
         dataset = dataset.train_test_split(test_size=0.1)
         assert 'validation' in dataset
 
-    if training_task == 'next-token-prediction':
+    if training_task == "supervised-fine-tuning":
         if dataset_identifier in ['cyber', 'pile']:
             column_name = 'text'
 
@@ -120,7 +120,7 @@ def run_fine_tune(
 
     else:
         raise NotImplementedError(
-            f"Only next-token-prediction fine-tuning is supported for now. Got {training_task} instead."
+            f"Only supervised-fine-tuning fine-tuning is supported for now. Got {training_task} instead."
         )
 
 

@@ -54,19 +54,15 @@ def main(cfg: DictConfig):
         pretrain_score.run_benchmark(
             model_unadapted, wandb.config.pretrain, countermeasures=True, logger=logger
         )
-
-        logger.info("Fine-tuning and recording results for unadapted model")
-        ft_val_losses = fine_tuning.run_fine_tune(
-            model_unadapted, wandb.config.finetune, logger
-        )
-
     else:
         # Just fine-tune the base model
         logger.info("No unadaptability methods provided")
-        logger.info("Fine-tuning and recording results for base model")
-        ft_val_losses = fine_tuning.run_fine_tune(
-            model_base, wandb.config.finetune, logger
-        )
+        model_unadapted = model_base
+
+    logger.info("Fine-tuning and recording results for base model")
+    ft_val_losses = fine_tuning.run_fine_tune(
+        model_base, wandb.config.finetune, logger
+    )
 
     # TODO -- Does this make sense for the fine-tune-only base model situation?
     logger.info("Calculating final unadaptability metrics")
