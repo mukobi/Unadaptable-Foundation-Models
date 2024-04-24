@@ -2,7 +2,7 @@ import os
 from torch import nn
 from torch.nn import functional as F
 
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class MLPNet(nn.Module):
@@ -26,13 +26,14 @@ class MLPNet(nn.Module):
         x = self.layers(x)
         return F.log_softmax(x, dim=1)
 
-class HuggingFaceModel:
+class HuggingFaceModel(nn.Module):
 
     def __init__(self, model_name: str = "zephyr/zephyr-7b-beta") -> None:
+        # On CAIS cluster, use /data/public_models if available
         if os.path.exists(f"/data/public_models/{model_name}"):
             model_name = f"/data/public_models/{model_name}"
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name)
     
     def forward(self, x):
         x = self.tokenizer(x, return_tensors="pt")
