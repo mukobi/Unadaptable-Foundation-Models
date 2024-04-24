@@ -1,5 +1,6 @@
 import logging
 import random
+import os
 import csv
 
 import hydra
@@ -46,7 +47,10 @@ def main(cfg: DictConfig):
         ft_val_losses = fine_tuning.run_fine_tune(
             model_base, wandb.config.finetune, logger
         )
-        with open(utils.get_base_finetune_eval_loss_path(wandb.config.baseline_metrics_path, wandb.config.model), "w") as f:
+        # create a csv file to store the val losses
+        file_name = utils.get_base_finetune_eval_loss_path(wandb.config.baseline_metrics_path, wandb.config.model)
+        os.makedirs(os.path.dirname(file_name), exist_ok=True)
+        with open(file_name, "w") as f:
             writer = csv.writer(f)
             writer.writerow(ft_val_losses)
         
