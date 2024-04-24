@@ -34,7 +34,7 @@ def run_countermeasures(model, config: dict, logger: logging.Logger):
     """
 
     if "countermeasures" not in config:
-        logger.info("No countermeassures to apply")
+        logger.info("No countermeasures to apply")
         return model
 
     for countermeasure in config["countermeasures"]:

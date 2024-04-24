@@ -1,14 +1,14 @@
-'''
+"""
 Scripts for fine-tuning on the harmful datasets
-'''
+"""
 from logging import Logger
 from typing import TYPE_CHECKING
 
-from data import get_hf_data
 from omegaconf.errors import ValidationError
 from transformers import Trainer, TrainingArguments
 
 from models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
+from ufm.data import get_hf_data
 
 if TYPE_CHECKING:
     from omegaconf import DictConfig
@@ -146,7 +146,7 @@ def calculate_unadaptability_metrics(
     config,
     logger,
 ) -> None:
-    '''
+    """
     Calculate and log metrics to wandb
-    '''
+    """
     pass

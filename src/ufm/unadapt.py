@@ -2,6 +2,7 @@
 import copy
 
 import torch
+from omegaconf import DictConfig
 from torch import nn, optim
 from torch.func import functional_call, grad, hessian, jvp
 from torch.nn import functional as F
@@ -37,7 +38,7 @@ def apply_pruning(model, prune_percentage):
 
 
 def apply_weight_rescaling(model, rescale_factor):
-    """For each pair of linear linear, scale the first by C and the second by 1/C."""
+    """For each pair of linear, scale the first by C and the second by 1/C."""
     linear_layers = [layer for layer in model.layers if isinstance(layer, nn.Linear)]
 
     for i in range(0, len(linear_layers) - 1, 2):

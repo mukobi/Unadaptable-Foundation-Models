@@ -17,13 +17,13 @@ __author__ = "owen-yeung"
 def run_benchmark(
     model_unadapted,
     configs,
-    countermeasures=False,  # countermeasures to reduce the efficacy of unadpt method?
+    countermeasures=False,  # countermeasures to reduce the efficacy of unadapt method?
     logger: Logger = None,
 ):
     """
     [UNTESTED, IN DEVELOPMENT]
     Runs Open LLM Leaderboard tasks on model and logs results to wandb.
-    No configs have been implmented yet
+    No configs have been implemented yet
     This function has not been tested. Please contact owen-yeung if any bugs show up or you need new features supported
 
     Note:
@@ -37,7 +37,7 @@ def run_benchmark(
 
     # Setting `task_manager` to the one above is optional and should generally be done
     # if you want to include tasks from paths other than ones in `lm_eval/tasks`.
-    # `simple_evaluate` will instantiate its own task_manager is the it is set to None here.
+    # `simple_evaluate` will instantiate its own task_manager if it is set to None here.
     if logger is not None:
         logger.info("Running Open LLM Leaderboard tasks on model...")
 
