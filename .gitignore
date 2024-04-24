@@ -167,6 +167,7 @@ data
 
 # IDE
 .idea*
+.editorconfig
 
 # Hydra
 outputs/*
