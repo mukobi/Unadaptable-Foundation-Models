@@ -31,7 +31,7 @@ def main(cfg: DictConfig):
     utils.check_base_results_saved(wandb.config.model.path, wandb.config.unadapt)
 
     logger.info("Loading model")
-    model_base = models.load_model(wandb.config.model, logger)
+    model_base = models.load_model(wandb.config.model, wandb.config.device)
 
     if wandb.config.unadapt:
         logger.info("Running unadapt methods")
