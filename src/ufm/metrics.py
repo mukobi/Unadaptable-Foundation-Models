@@ -1,4 +1,12 @@
-"""Metrics for evaluating unadaptability and relative pre-training performance."""
+"""
+Metrics for evaluating unadaptability and relative pre-training performance
+"""
+import copy
+
+import numpy as np
+
+from ufm.unadapt import get_unadaptable_model
+from ufm.utils import test
 
 
 def calculate_loss_gap_ratio(losses_unadapt, losses_base):

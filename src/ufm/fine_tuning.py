@@ -1,14 +1,12 @@
-'''
+"""
 Scripts for fine-tuning on the harmful datasets
-'''
-from typing import TYPE_CHECKING
-from datasets import load_dataset, Dataset
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from transformers import TrainingArguments, Trainer
+"""
 from logging import Logger
-import wandb
 # from models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
+from typing import TYPE_CHECKING
+
 from omegaconf.errors import ValidationError
+from transformers import Trainer, TrainingArguments
 
 from ufm.data import get_hf_data
 
@@ -66,7 +64,7 @@ def run_fine_tune(
 
     # Load dataset
     logger.info(f"Loading dataset {config['dataset']} ...")
-    dataset = get_hf_data(dataset_identifier) #TODO batch size config etc
+    dataset = get_hf_data(dataset_identifier)  # TODO batch size config etc
 
     # assert train splits exist
     assert 'train' in dataset
@@ -149,7 +147,7 @@ def calculate_unadaptability_metrics(
     config,
     logger,
 ) -> None:
-    '''
+    """
     Calculate and log metrics to wandb
-    '''
+    """
     pass
