@@ -1,9 +1,9 @@
 import logging
-
+import sys
 import hydra
+import wandb
 from omegaconf import DictConfig, OmegaConf
 
-import wandb
 from ufm import countermeasures, fine_tuning, metrics, models, pretrain_score, unadapt, utils
 
 
@@ -14,7 +14,7 @@ def main(cfg: DictConfig):
 
     # Init Weights and Biases run
     wandb.init(
-        project=cfg.get("project", "unadaptable-foundation-models"),
+        project="unadaptable-foundation-models",
         # Convert config to dict type
         config=OmegaConf.to_container(cfg, resolve=True),
         mode="disabled" if cfg.disable_wandb else "online",
@@ -79,4 +79,13 @@ def main(cfg: DictConfig):
 
 
 if __name__ == "__main__":
+    # Hacky workaround for Hydra + WandB sweeps
+    new_cmd_line_args = []
+    for arg in sys.argv:
+        # Try and catch the wandb formatted args
+        if "={" in arg:
+            arg = arg.replace("'", "")
+        new_cmd_line_args.append(arg)
+    sys.argv = new_cmd_line_args
+
     main()
