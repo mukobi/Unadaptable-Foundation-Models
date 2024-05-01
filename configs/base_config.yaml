@@ -8,4 +8,4 @@ disable_wandb: false  # Disable WandB online integration
 model: MLP
 pretrained: False
 
-testinit: True
+testinit: False
