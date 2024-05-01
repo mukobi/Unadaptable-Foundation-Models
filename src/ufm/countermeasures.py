@@ -3,6 +3,8 @@ import logging
 import torch
 import torch.nn as nn
 
+logger = logging.getLogger()
+
 
 class ResidualModule(nn.Module):
     def __init__(self, in_features, out_features):
@@ -19,7 +21,7 @@ class ResidualModule(nn.Module):
         return x
 
 
-def run_countermeasures(model, config: dict, logger: logging.Logger):
+def run_countermeasures(model, config: dict):
     """
     run countermeasures on the model to make it easier to finetune
     expected config:
