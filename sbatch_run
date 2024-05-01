@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=00:10:00  # time allocation, HH:MM:SS
+#SBATCH --time=00:20:00  # time allocation, HH:MM:SS
 #SBATCH --nodes=1
 #SBATCH --partition=single
 #SBATCH --job-name=ufm  # job name for the allocation
@@ -8,4 +8,10 @@
 # Run our UFM setup
 source ./setup.sh
 
-# python3 main.py
+# Spin one agent
+sweep_id=$1
+nrun=$2
+for ((i=1; i<=$nrun; i++))
+do
+	wandb agent --count 1 $sweep_id
+done
