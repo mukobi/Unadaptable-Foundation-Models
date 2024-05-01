@@ -28,7 +28,7 @@ class MLPNet(nn.Module):
         x = self.layers(x)
         return F.log_softmax(x, dim=1)
 
-class HuggingFaceModel():
+class HuggingFaceModel(nn.Module):
 
     def __init__(self, model_name: str = "zephyr/zephyr-7b-beta") -> None:
         # On CAIS cluster, use /data/public_models if available
@@ -38,7 +38,7 @@ class HuggingFaceModel():
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForCausalLM.from_pretrained(model_name)
     
-    def __call__(self, x):
+    def forward(self, x):
         x = self.tokenizer(x, return_tensors="pt")
         return self.model(**x).logits
 
