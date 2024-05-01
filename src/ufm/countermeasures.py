@@ -1,6 +1,8 @@
 import logging
+
 import torch
 import torch.nn as nn
+
 
 class ResidualModule(nn.Module):
     def __init__(self, in_features, out_features):
@@ -8,7 +10,6 @@ class ResidualModule(nn.Module):
         self.fc = nn.Linear(in_features, out_features)
         self.fc.weight.data.zero_()
         self.fc.bias.data.zero_()
-        
 
     def forward(self, x):
         residual = x
@@ -16,6 +17,7 @@ class ResidualModule(nn.Module):
         x = torch.relu(x)
         x = x + residual
         return x
+
 
 def run_countermeasures(model, config: dict, logger: logging.Logger):
     """
@@ -32,23 +34,23 @@ def run_countermeasures(model, config: dict, logger: logging.Logger):
     """
 
     if "countermeasures" not in config:
-        logger.info("No countermeassures to apply")
+        logger.info("No countermeasures to apply")
         return model
-    
+
     for countermeasure in config["countermeasures"]:
         # some of the countermeasures can not be applied together
-        
+
         if countermeasure["method"] == "add_layer":
             if countermeasure["model_type"] == "MLPNet":
                 logger.info("Adding layers to the model")
                 raise NotImplementedError("Residual layers are not implemented yet")
             else:
                 raise ValueError(f"Unknown model type {countermeasure['model_type']}")
-            
+
         elif countermeasure["method"] == "replace_layer":
             raise NotImplementedError("Residual layers are not implemented yet")
-        
+
         else:
             raise ValueError(f"Unknown countermeasure type {countermeasure['type']}")
-    
+
     return model
