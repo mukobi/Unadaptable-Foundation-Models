@@ -4,8 +4,9 @@ defaults:
   # Notice the keywords below match config dirs
   - pretrain: mnist
   - unadapt: gradient
-  - /finetune/fashion
+  - finetune: fashion
   - _self_
 
 # Base name identifying the run
 basename: mnist
+early_terminate: ~
