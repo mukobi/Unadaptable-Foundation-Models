@@ -158,8 +158,7 @@ This will produce a sweep ID you can pass into an agent which will perform a giv
 parameters.
 
 ##### Your sweep config
-Sweep configs have a restricted format for `wandb`. See [configuration options](https://docs.wandb.
-ai/guides/sweeps/sweep-config-keys). 
+Sweep configs have a restricted format for `wandb`. See [configuration options](https://docs.wandb.ai/guides/sweeps/sweep-config-keys). 
 So to configure your run in other ways, you will want to pass in the "parent" hydra config that configures the other 
 aspects of your run. To do this we add the `--config-name` hydra argument into the sweep config file so that `wandb` 
 picks it up and passes it into the agents. So the `command` struct of your sweep yaml will look like
