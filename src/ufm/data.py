@@ -5,6 +5,7 @@ import torch.utils.data
 from torchvision import datasets, transforms
 
 
+
 def get_mnist_data(
     batch_size: int = 128, test_batch_size: int = 1000
 ) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
@@ -98,7 +99,17 @@ def get_hf_data(
         - For the "harmfulqa", "toxic", and "pile" datasets, there is no subset name and the split is 'train'.
         - If you would like to add support for a new dataset, please contact owen-yeung.
     """
-    
+    if dataset_identifier == "dummy":
+        # Create a small dummy dataset with only one row ('text') 
+        dummy_dataset = huggingface_datasets.Dataset.from_dict(
+            {
+                "text": ["This is a dummy dataset."],
+            }
+        )
+        dummy_dict = huggingface_datasets.DatasetDict({"train": dummy_dataset, "validation": dummy_dataset})
+        return dummy_dict
+
+
     if dataset_identifier == "cyber":
         dataset_name = 'cais/wmdp-corpora'
         subset_name = 'cyber-forget-corpus' # only 1k rows, test_batch shouldn't exceed

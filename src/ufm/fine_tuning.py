@@ -1,13 +1,13 @@
 '''
 Scripts for fine-tuning on the harmful datasets
 '''
-from datasets import load_dataset, Dataset
+from datasets import load_dataset, Dataset, DatasetDict
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from transformers import TrainingArguments, Trainer
+from transformers import TrainingArguments, Trainer, DataCollatorForLanguageModeling
 from logging import Logger
 import wandb
-from data import get_hf_data
-from models import HuggingFaceModel #HF model is a wrapper with model AND tokenizer
+from src.ufm.data import get_hf_data
+from src.ufm.models import HuggingFaceModel #HF model is a wrapper with model AND tokenizer
 
 def run_fine_tune(model_unadapted: HuggingFaceModel, configs, logger: Logger, training_task: str = 'next-token-prediction'):
     '''
@@ -17,7 +17,7 @@ def run_fine_tune(model_unadapted: HuggingFaceModel, configs, logger: Logger, tr
     Only supports text-only datasets (cyber and pile) for now
     '''
     # Assert configs has dataset name and is either 'cyber' or 'pile'
-    assert 'dataset' in configs and configs['dataset'] in ['cyber', 'pile']
+    assert 'dataset' in configs and configs['dataset'] in ['dummy', 'cyber', 'pile']
     dataset_identifier = configs['dataset']
 
     # Assert dataset column to fine tune on is specified
@@ -25,8 +25,14 @@ def run_fine_tune(model_unadapted: HuggingFaceModel, configs, logger: Logger, tr
 
     # column_name = configs['column']
 
-    tokenizer = model_unadapted.tokenizer
+    # assert 'device' in configs and configs['device'] in ['cpu', 'cuda']
+    # device = configs['device']
+
     model = model_unadapted.model
+
+    device = model.device 
+
+    tokenizer = model_unadapted.tokenizer
 
     # Load dataset
     logger.info(f"Loading dataset {configs['dataset']} ...")
@@ -37,10 +43,13 @@ def run_fine_tune(model_unadapted: HuggingFaceModel, configs, logger: Logger, tr
 
     # If no validation set create one
     if 'validation' not in dataset:
-        dataset = dataset.train_test_split(test_size=0.1)
+        dataset = dataset['train'].train_test_split(test_size=0.1)
+        train_dataset = dataset['train']
+        validation_dataset = dataset['test']
+        dataset = DatasetDict({'train': train_dataset, 'validation': validation_dataset})
 
     if training_task == 'next-token-prediction':
-        if dataset_identifier in ['cyber', 'pile']:
+        if dataset_identifier in ['dummy', 'cyber', 'pile']:
             column_name = 'text'
         
         def tokenize_function(examples):
@@ -52,8 +61,14 @@ def run_fine_tune(model_unadapted: HuggingFaceModel, configs, logger: Logger, tr
         train_dataset = tokenized_datasets["train"].shuffle(seed=42)
         eval_dataset = tokenized_datasets["validation"].shuffle(seed=42)
 
+        data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False) #TODO unverified copilot code
+
         #TODO training_args should take in relevant configs
-        training_args = TrainingArguments()
+        training_args = TrainingArguments(
+            output_dir=configs['output_dir'],
+            num_train_epochs=configs['num_train_epochs'],
+            per_device_train_batch_size=configs['per_device_train_batch_size'],
+        )
 
         #training_args with relevant configs
         # training_args = TrainingArguments(
@@ -69,7 +84,7 @@ def run_fine_tune(model_unadapted: HuggingFaceModel, configs, logger: Logger, tr
 
         trainer = Trainer(
             model=model,
-            training_args=training_args,
+            args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             tokenizer=tokenizer,

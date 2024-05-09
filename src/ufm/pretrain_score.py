@@ -2,7 +2,7 @@ from logging import Logger
 import lm_eval
 import wandb
 
-from lm_eval.logging_utils import WandbLogger
+# from lm_eval.logging_utils import WandbLogger
 
 __author__ = "owen-yeung"
 
@@ -64,7 +64,7 @@ def run_benchmark(
     # but there's probably a better way
     project_name = "pretrain-scores-with-countermeasures" if countermeasures else "pretrain-scores-no-countermeasures"
 
-    wandb_logger = WandbLogger(
+    wandb_logger = lm_eval.logging_utils.WandbLogger(
         project=project_name, job_type="eval"
     )  
     wandb_logger.post_init(results)
