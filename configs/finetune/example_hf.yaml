@@ -2,12 +2,19 @@
 # To demonstrate the necessary fields for the configuration file
 # For reference only
 
+# REQUIRED PARAMETERS:
 dataset: # cyber / harmfulqa / toxic / pile 
 # Supported identifiers are:
 #             - "cyber" for the 'cais/wmdp-corpora' dataset with the 'cyber-forget-corpus' subset.
 #             - "harmfulqa" for the 'declare-lab/HarmfulQA' dataset.
 #             - "toxic" for the 'allenai/real-toxicity-prompts' dataset.
 #             - "pile" for the 'NeelNanda/pile-10k' dataset.
+device: 'cuda'
+output_dir: './results'
+num_train_epochs: 3
+per_device_train_batch_size: 8
+
+# OPTIONAL PARAMETERS:
 epochs: 
 lr: 
 batch_size: 
