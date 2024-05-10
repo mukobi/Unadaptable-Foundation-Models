@@ -1,14 +1,8 @@
 """
 Scripts for fine-tuning on the harmful datasets
 """
-from logging import Logger
+import logging
 from typing import TYPE_CHECKING
-
-
-import wandb
-
-from ufm.data import get_hf_data
-from ufm.models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
 
 from omegaconf.errors import ValidationError
 from transformers import Trainer, TrainingArguments
@@ -18,6 +12,8 @@ from ufm.data import get_hf_data
 
 if TYPE_CHECKING:
     from omegaconf import DictConfig
+
+logger = logging.getLogger()
 
 FINETUNE_DATASETS = [
     "cyber",
@@ -47,7 +43,6 @@ def validate_finetune_cfg(cfg: "DictConfig") -> "DictConfig":
 def run_fine_tune(
     model_unadapted: HuggingFaceModel,
     config: "DictConfig",
-    logger: Logger,
     training_task: str = "supervised-fine-tuning"
 ):
     """
@@ -69,8 +64,8 @@ def run_fine_tune(
 
     # Load dataset
     logger.info(f"Loading dataset {config['dataset']} ...")
-    dataset = get_hf_data(dataset_identifier) #TODO batch size config etc
-    
+    dataset = get_hf_data(dataset_identifier)  # TODO batch size config etc
+
     # assert train splits exist
     assert 'train' in dataset
 
@@ -94,7 +89,7 @@ def run_fine_tune(
 
         # TODO training_args should take in relevant config
         training_args = TrainingArguments(
-            #report_to="wandb", by default it reports to all connected loggers
+            # report_to="wandb", by default it reports to all connected loggers
             evaluation_strategy="steps",
             eval_steps="10",
         )
@@ -122,7 +117,7 @@ def run_fine_tune(
         logger.info("Fine-tuning model...")
         trainer.train()
 
-        #eval_results = trainer.evaluate()
+        # eval_results = trainer.evaluate()
         eval_loss = trainer.state.log_history['eval_loss']
 
         return eval_loss  # validation loss for fine-tuning

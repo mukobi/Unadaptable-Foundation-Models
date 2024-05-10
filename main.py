@@ -1,13 +1,89 @@
-import logging
-import random
-import os
 import csv
+import logging
+import os
 
 import hydra
+import wandb
 from omegaconf import DictConfig, OmegaConf
 
-import wandb
-from ufm import countermeasures, fine_tuning, metrics, models, pretrain_score, unadapt, utils
+from ufm import countermeasures, fine_tuning, metrics, models, unadapt, utils
+
+
+def run_baseline_suite():
+    """
+    Run the suite of methods and metrics for a baseline model
+    """
+    logger = logging.getLogger()
+    logger.info("Running Baseline suite")
+    model_base = models.HuggingFaceModel(wandb.config.model)
+
+    logger.info("Benchmarking base model for relative pre-training performance")
+    metrics.run_benchmark(model_base, "base")
+    ft_val_losses = fine_tuning.run_fine_tune(model_base, wandb.config.finetune)
+
+    # Create a csv file to store the val losses
+    file_name = utils.get_base_finetune_eval_loss_path(wandb.config.baseline_metrics_path, wandb.config.model)
+    logger.info(f"Saving base model val losses to disk: {file_name}")
+    os.makedirs(os.path.dirname(file_name), exist_ok=True)
+    with open(file_name, "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(ft_val_losses)
+
+    logger.info("Benchmarking finetuned model")
+    metrics.run_benchmark(model_base, "finetuned")
+
+    logger.info("Calculating final unadaptability metrics")
+    loss_gap_ratio = metrics.calculate_unadaptability_metrics(
+        ft_val_losses, wandb.config.baseline_metrics_path, wandb.config.model
+    )
+
+    logger.info("This is a baseline run, loss gap ratio should be zero.")
+    logger.info(f"Final loss gap ratio: {loss_gap_ratio:.6f}")
+    logger.info("Finished Baseline suite")
+
+    return
+
+
+def run_unadapt_suite():
+    """
+    Run the suite of methods and metrics for an unadapted model
+    """
+    logger = logging.getLogger()
+    logger.info("Running Unadaptability suite")
+
+    logger.info(f"Loading base model {wandb.config.model}")
+    model_base = models.HuggingFaceModel(wandb.config.model)
+
+    logger.info("Running unadapt method")
+    unadapt_method = unadapt.get_unadapt_method(wandb.config.unadapt.method)
+    model_unadapted = unadapt_method(model_base, wandb.config.unadapt)
+
+    logger.info("Benchmarking unadapted model")
+    metrics.run_benchmark(model_unadapted, "unadapted")
+
+    logger.info("Run basic countermeasures")
+    model_unadapted = countermeasures.run_countermeasures(
+        model_unadapted, wandb.config.countermeasures
+    )
+
+    logger.info("Benchmarking countermeasured model")
+    metrics.run_benchmark(model_unadapted, "countermeasured")
+
+    logger.info("Fine-tuning and recording results for unadapted model")
+    ft_val_losses = fine_tuning.run_fine_tune(model_unadapted, wandb.config.finetune)
+
+    logger.info("Benchmarking finetuned model")
+    metrics.run_benchmark(model_unadapted, "unadapted_finetuned")
+
+    logger.info("Calculating final unadaptability metrics")
+    loss_gap_ratio = metrics.calculate_unadaptability_metrics(
+        ft_val_losses, wandb.config.baseline_metrics_path, wandb.config.model
+    )
+
+    logger.info(f"Final loss gap ratio: {loss_gap_ratio:.6f}")
+    logger.info("Finished Unadaptability suite")
+
+    return
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="base_config")
@@ -31,91 +107,27 @@ def main(cfg: DictConfig):
     utils.set_seed(wandb.config.seed)
     logger = logging.getLogger()
 
-    # Check for base model metrics already saved unless undapt method is blank
+    # Check for base model metrics already saved unless unadapt method is blank
     base_metrics_saved = utils.check_base_results_saved(wandb.config.baseline_metrics_path, wandb.config.model)
-    
-    if not base_metrics_saved and not cfg.run_baseline:
+
+    if not base_metrics_saved and not wandb.config.run_baseline:
         logger.error("Base model metrics not found. Please first run baseline by setting run_baseline to True.")
         raise ValueError("Base model metrics not found. Please first run baseline by setting run_baseline to True.")
-    
-    if base_metrics_saved and cfg.run_baseline:
+
+    if base_metrics_saved and wandb.config.run_baseline:
         logger.error("Base model metrics already saved. Please set run_baseline to False.")
         raise ValueError("Base model metrics already saved. Please set run_baseline to False.")
-    
-    if cfg.run_baseline:
-        logger.info("Running baseline")
-        model_base = models.HuggingFaceModel(wandb.config.model)
-        
-        logger.info("Benchmarking base model for relative pre-training performance")
-        metrics.run_benchmark(model_base, logger, "base")
-        ft_val_losses = fine_tuning.run_fine_tune(
-            model_base, wandb.config.finetune, logger
-        )
-        # create a csv file to store the val losses
-        
-        
-        file_name = utils.get_base_finetune_eval_loss_path(wandb.config.baseline_metrics_path, wandb.config.model)
-        logger.info(f"Saving base model val losses to disk: {file_name}")
-        os.makedirs(os.path.dirname(file_name), exist_ok=True)
-        with open(file_name, "w") as f:
-            writer = csv.writer(f)
-            writer.writerow(ft_val_losses)
-        
-        logger.info("Benchmarking finetuned model for relative fintuning performance")
-        metrics.run_benchmark(model_base, logger, "finetuned")
-        
-        logger.info("Calculating final unadaptability metrics for testing purpose.")
-        loss_gap_ratio = metrics.calculate_unadaptability_metrics(ft_val_losses, wandb.config.baseline_metrics_path, wandb.config.model, logger)
 
-        logger.info("This is baseline run, loss gap ratio should be zero.")
-        logger.info(f"Final loss gap ratio: {loss_gap_ratio:.6f}")
-        logger.info("Done!")
-    
-    
-    
-    logger.info("Loading model")
-    model_base = models.HuggingFaceModel(wandb.config.model)
+    if wandb.config.run_baseline:
+        run_baseline_suite()
 
-    logger.info("Running unadapt methods")
-    unadapt_method = unadapt.get_unadapt_method(wandb.config.unadapt.method)
-    model_unadapted = unadapt_method(model_base, wandb.config.unadapt)
-
-    logger.info("Benchmarking unadapted model for relative pre-training performance")
-    metrics.run_benchmark(
-        model_unadapted, logger, "unadapted"
-    )
-
-    logger.info("Run basic countermeasures")
-    model_unadapted = countermeasures.run_countermeasures(
-        model_unadapted, wandb.config.countermeasures, logger
-    )
-    
-    # logger.info(
-    #     "Benchmarking countermeasured model for relative pre-training performance"
-    # )
-    # metrics.run_benchmark(
-    #     model_unadapted, logger, "countermeasured"
-    # )
-
-    logger.info("Fine-tuning and recording results for unadapted model")
-    ft_val_losses = fine_tuning.run_fine_tune(
-        model_unadapted, wandb.config.finetune, logger
-    )
-
-    logger.info("Benchmarking finetuned model for relative fintuning performance")
-    metrics.run_benchmark(
-        model_unadapted, logger, "unadapted_finetuned"
-    )
-    
-    logger.info("Calculating final unadaptability metrics")
-    loss_gap_ratio = metrics.calculate_unadaptability_metrics(ft_val_losses, wandb.config.baseline_metrics_path, wandb.config.model, logger)
-
-    logger.info(f"Final loss gap ratio: {loss_gap_ratio:.6f}")
-
-    logger.info("Done!")
+    if wandb.config.unadapt:
+        run_unadapt_suite()
 
     # Call cleanup
     wandb.finish()
+
+    return
 
 
 if __name__ == "__main__":
