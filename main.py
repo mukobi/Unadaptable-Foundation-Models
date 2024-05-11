@@ -1,10 +1,12 @@
 import csv
 import logging
 import os
+import sys
 
 import hydra
 import wandb
 from omegaconf import DictConfig, OmegaConf
+
 
 from ufm import countermeasures, fine_tuning, metrics, models, unadapt, utils
 
@@ -93,7 +95,7 @@ def main(cfg: DictConfig):
 
     # Init Weights and Biases run
     wandb.init(
-        project=cfg.get("project", "unadaptable-foundation-models"),
+        project="unadaptable-foundation-models",
         # Convert config to dict type
         config=OmegaConf.to_container(cfg, resolve=True),
         mode="disabled" if cfg.disable_wandb else "online",
@@ -103,6 +105,10 @@ def main(cfg: DictConfig):
         dir=".",
     )
 
+    if wandb.config.testinit:
+        # If testing main initialization
+        return 0
+
     # Initialize seed and logger
     utils.set_seed(wandb.config.seed)
     logger = logging.getLogger()
@@ -110,9 +116,11 @@ def main(cfg: DictConfig):
     # Check for base model metrics already saved unless unadapt method is blank
     base_metrics_saved = utils.check_base_results_saved(wandb.config.baseline_metrics_path, wandb.config.model)
 
+
     if not base_metrics_saved and not wandb.config.run_baseline:
         logger.error("Base model metrics not found. Please first run baseline by setting run_baseline to True.")
         raise ValueError("Base model metrics not found. Please first run baseline by setting run_baseline to True.")
+
 
     if base_metrics_saved and wandb.config.run_baseline:
         logger.error("Base model metrics already saved. Please set run_baseline to False.")
@@ -131,4 +139,13 @@ def main(cfg: DictConfig):
 
 
 if __name__ == "__main__":
+    # Hacky workaround for Hydra + WandB sweeps
+    new_cmd_line_args = []
+    for arg in sys.argv:
+        # Try and catch the wandb formatted args
+        if "={" in arg:
+            arg = arg.replace("'", "")
+        new_cmd_line_args.append(arg)
+    sys.argv = new_cmd_line_args
+
     main()

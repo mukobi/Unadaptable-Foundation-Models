@@ -8,3 +8,4 @@ disable_wandb: false  # Disable WandB online integration
 model: EleutherAI/pythia-14m
 baseline_metrics_path: baseline # Path to save metrics
 run_baseline: true # If True, calculates metric on the base model. If False, applies unadapt and calculate metric on anadapt model
+testinit: False

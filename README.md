@@ -142,15 +142,40 @@ You can use the `+experiment` argument with hydra to specify a config that has a
 For example you might have an experiment config with overrides for a fast and small run in 
 `configs/experiment/fast_small.yaml`:
 ```bash
-python main.py --config-name=mnist +experiment=fast_small
+python main.py --config-name=mnist +experiment=fast_small  # Note we exclude ".yaml"
 ```
+
 Note:
 - Your experiment should exist in the `experiment` dir
 - Your conf should have `# @package _global_` at the top so that its parameters are imported at root level structure 
 
 #### 5. Sweeps
-With WandB you can run hyperparameter sweeps with the `wandb sweep` command.  
-Configuring this will take some coding though.
-See: https://docs.wandb.ai/guides/sweeps/walkthrough
+With WandB you can run hyperparameter sweeps with the `wandb sweep` command and your sweep config file. 
+```bash
+wandb sweep configs/experiment/sweep_example.yaml
+```
+This will produce a sweep ID you can pass into an agent which will perform a given run with a given sample of 
+parameters.
 
-Note there is also some finagling to get this working with Hydra Experiments.
+##### Your sweep config
+Sweep configs have a restricted format for `wandb`. See [configuration options](https://docs.wandb.ai/guides/sweeps/sweep-config-keys). 
+So to configure your run in other ways, you will want to pass in the "parent" hydra config that configures the other 
+aspects of your run. To do this we add the `--config-name` hydra argument into the sweep config file so that `wandb` 
+picks it up and passes it into the agents. So the `command` struct of your sweep yaml will look like
+```yaml
+# configs/experiments/sweep_example.yaml
+command:
+  - ${env}  # Collect env variables
+  - ${interpreter}  # python
+  - ${program}  # Defined above
+  - --config-name=mnist  # points to configs/mnist.yaml
+  - ${args_no_hyphens}  # For hydra
+```
+
+##### Sweeps with SLURM
+
+W&B [recommends](https://docs.wandb.ai/guides/sweeps/faq#how-should-i-run-sweeps-on-slurm) running 1 count per agent 
+on SLURM
+```bash
+wandb agent --count 1 SWEEP_ID
+```

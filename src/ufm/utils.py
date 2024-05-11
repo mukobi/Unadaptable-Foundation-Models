@@ -59,8 +59,8 @@ def get_model(model_name: str, device="cuda"):
     else:
         raise NotImplementedError
     return model
-
-
+  
+ 
 def get_dataset(dataset_name: str, batch_size: int = 64, test_batch_size: int = 1000):
     if dataset_name.lower() == "mnist":
         return udata.get_mnist_data(batch_size, test_batch_size)

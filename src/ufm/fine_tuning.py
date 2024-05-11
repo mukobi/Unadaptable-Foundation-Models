@@ -1,13 +1,15 @@
 """
 Scripts for fine-tuning on the harmful datasets
 """
+
 import logging
+from logging import Logger
+# from models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
 from typing import TYPE_CHECKING
 
 from omegaconf.errors import ValidationError
 from transformers import Trainer, TrainingArguments
 
-from models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
 from ufm.data import get_hf_data
 
 if TYPE_CHECKING:
@@ -41,7 +43,8 @@ def validate_finetune_cfg(cfg: "DictConfig") -> "DictConfig":
 
 
 def run_fine_tune(
-    model_unadapted: HuggingFaceModel,
+    # model_unadapted: HuggingFaceModel,
+    model_unadapted,
     config: "DictConfig",
     training_task: str = "supervised-fine-tuning"
 ):
