@@ -1,6 +1,8 @@
 """
 Scripts for fine-tuning on the harmful datasets
 """
+
+import logging
 from logging import Logger
 # from models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
 from typing import TYPE_CHECKING
@@ -12,6 +14,8 @@ from ufm.data import get_hf_data
 
 if TYPE_CHECKING:
     from omegaconf import DictConfig
+
+logger = logging.getLogger()
 
 FINETUNE_DATASETS = [
     "cyber",
@@ -42,7 +46,6 @@ def run_fine_tune(
     # model_unadapted: HuggingFaceModel,
     model_unadapted,
     config: "DictConfig",
-    logger: Logger,
     training_task: str = "supervised-fine-tuning"
 ):
     """
@@ -88,7 +91,11 @@ def run_fine_tune(
         eval_dataset = tokenized_datasets["validation"].shuffle(seed=42)
 
         # TODO training_args should take in relevant config
-        training_args = TrainingArguments()
+        training_args = TrainingArguments(
+            # report_to="wandb", by default it reports to all connected loggers
+            evaluation_strategy="steps",
+            eval_steps="10",
+        )
 
         # training_args with relevant config
         # training_args = TrainingArguments(
@@ -113,41 +120,12 @@ def run_fine_tune(
         logger.info("Fine-tuning model...")
         trainer.train()
 
-        logger.info("Evaluating model...")
-        eval_results = trainer.evaluate()
+        # eval_results = trainer.evaluate()
+        eval_loss = trainer.state.log_history['eval_loss']
 
-        return eval_results['eval_loss']  # validation loss for fine-tuning
+        return eval_loss  # validation loss for fine-tuning
 
     else:
         raise NotImplementedError(
             f"Only supervised-fine-tuning fine-tuning is supported for now. Got {training_task} instead."
         )
-
-
-# def run_fine_tune(
-#         model,
-#         train_dataset: Dataset,
-#         args: TrainingArguments,
-#         tokenizer: AutoTokenizer,
-#         # eval_dataset: Dataset,
-#         ) -> None:
-
-#     trainer = Trainer(
-#         model=model,
-#         args=args,
-#         train_dataset=train_dataset,
-#         # eval_dataset=eval_dataset,
-#         tokenizer=tokenizer,
-#     )
-
-#     trainer.train()
-
-def calculate_unadaptability_metrics(
-    ft_val_losses,
-    config,
-    logger,
-) -> None:
-    """
-    Calculate and log metrics to wandb
-    """
-    pass

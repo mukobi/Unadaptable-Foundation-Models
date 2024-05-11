@@ -1,15 +1,20 @@
 """
 Metrics for evaluating unadaptability and relative pre-training performance
 """
-import copy
+import csv
+import logging
 
+import lm_eval
 import numpy as np
+import wandb
+from lm_eval.logging_utils import WandbLogger
 
-from ufm.unadapt import get_unadaptable_model
-from ufm.utils import test
+from ufm.utils import get_base_benchmark_path, get_base_finetune_eval_loss_path
+
+logger = logging.getLogger()
 
 
-def calculate_loss_gap_ratio(losses_unadapt, losses_base):
+def calculate_loss_gap_ratio(losses_unadapt: list[float], losses_base: list[float]) -> float:
     loss_max = losses_base[
         0
     ]  # Maximum loss, since you could always use the base model for the fine-tune task zero-shot
@@ -29,33 +34,70 @@ def calculate_loss_gap_ratio(losses_unadapt, losses_base):
 
 
 def calculate_unadaptability_metrics(
-    model,
-    unadapt_config,
-    device,
-    config,
-    pre_train_loader,
-    pre_test_loader,
-    fine_train_loader,
-    fine_test_loader,
-):
-    # Make the model unadaptable; optionally use pretraining dataset
-    ufm_model = copy.deepcopy(model)
-    ufm_model = get_unadaptable_model(
-        ufm_model, unadapt_config, device, pre_train_loader
+    losses_unadapt: list[float], baseline_metrics_path: str, model_name: str
+) -> float:
+    """
+    Calculate the loss gap ratio.
+    Load in the val losses stored from fine-tuning the base model. csv file.
+    """
+    # TODO: Calculate relative pre-training/finetunting performance. Waiting for the implementation of run_benchmark
+    # Load in the val losses that already stored from fine-tuning the base model on disk
+
+    with open(get_base_finetune_eval_loss_path(baseline_metrics_path, model_name), "r") as f:
+        losses_base = list(csv.reader(f))
+
+    with open(get_base_benchmark_path(baseline_metrics_path, model_name, "pretrained"), "r") as f:
+        benchmark_pretrained = list(csv.reader(f))
+
+    with open(get_base_benchmark_path(baseline_metrics_path, model_name, "finetuned"), "r") as f:
+        benchmark_finetuned = list(csv.reader(f))
+
+    # Calculate loss gap ratio
+    loss_gap_ratio = calculate_loss_gap_ratio(losses_unadapt, losses_base)
+
+    # TODO: calculate relative pre-training/finetuning performance. Need more parameters to be passed in. ex. benchmark_unadapt, benchmark_unadapt_finetuned
+
+    wandb.log({f"unadaptability_metrics/loss_gap_ratio": loss_gap_ratio})
+    logger.info(f"Loss gap ratio: {loss_gap_ratio:.6f}")
+
+    return loss_gap_ratio
+
+
+def run_benchmark(model_unadapted, tag: str = None):
+    """
+    [IN DEVELOPMENT]
+    Runs Open LLM Leaderboard tasks on model and logs results to wandb.
+    wandb.config and countermeasures are not implemented yet (though they are called in the main.py skeleton)
+    This function has not been tested. Please contact owen-yeung if any bugs show up.
+
+    Note:
+    - make sure to login to wandb before running this function
+    """
+    return
+    # TODO: Implement base functionality with lm_eval, forget about the other params for now
+
+    # indexes all tasks from the `lm_eval/tasks` subdirectory.
+    # Alternatively, you can set `TaskManager(include_path="path/to/my/custom/task/configs")`
+    # to include a set of tasks in a separate directory.
+    task_manager = lm_eval.tasks.TaskManager()
+
+    # Setting `task_manager` to the one above is optional and should generally be done
+    # if you want to include tasks from paths other than ones in `lm_eval/tasks`.
+    # `simple_evaluate` will instantiate its own task_manager if it is set to None here.
+    logger.info("Running Open LLM Leaderboard tasks on model...")
+
+    results = lm_eval.simple_evaluate(  # call simple_evaluate
+        model=model_unadapted,
+        tasks=["arc", "hellaswag", "mmlu", "truthfulqa", "winogrande", "gsm8k"],  # tasks from Open LLM leaderboard
+        num_fewshot=0,
+        task_manager=task_manager,
+        # ...
     )
 
-    # Calculate relative accuracy on pretraining test dataset
-    _, ufm_pre_acc = test(ufm_model, device, pre_test_loader)
-
-    # Finetune unadaptable model on finetuning dataset
-    # TODO -- Move to fine_tuning module
-    # ufm_fine_losses = train(
-    #     ufm_model,
-    #     device,
-    #     fine_train_loader,
-    #     config.finetune.epochs,
-    #     learning_rate=config.finetune.lr,
-    # )
-    # _, ufm_fine_acc = test(ufm_model, device, fine_test_loader)
-
-    return ufm_pre_acc, ufm_fine_acc, ufm_fine_losses
+    logger.info("Logging results to wandb...")
+    wandb_logger = WandbLogger(
+        project="lm-eval-harness-integration", job_type="eval"
+    )  # or empty if wandb.init(...) already called before
+    wandb_logger.post_init(results)
+    wandb_logger.log_eval_result()
+    wandb_logger.log_eval_samples(results["samples"])  # if log_samples
