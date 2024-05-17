@@ -7,7 +7,6 @@ import logging
 import lm_eval
 import numpy as np
 import wandb
-from lm_eval.logging_utils import WandbLogger
 
 from ufm.utils import get_base_benchmark_path, get_base_finetune_eval_loss_path
 
@@ -95,7 +94,7 @@ def run_benchmark(model_unadapted, tag: str = None):
     )
 
     logger.info("Logging results to wandb...")
-    wandb_logger = WandbLogger(
+    wandb_logger = lm_eval.logging_utils.WandbLogger(
         project="lm-eval-harness-integration", job_type="eval"
     )  # or empty if wandb.init(...) already called before
     wandb_logger.post_init(results)
