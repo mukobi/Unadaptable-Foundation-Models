@@ -72,10 +72,14 @@ def run_fine_tune(
     # assert train splits exist
     assert 'train' in dataset
 
-    # If no validation set create one
-    if 'validation' not in dataset:
-        dataset = dataset.train_test_split(test_size=0.1)
-        assert 'validation' in dataset
+    # # If no validation set create one
+    # if 'validation' not in dataset:
+    #     # dataset = dataset.train_test_split(test_size=0.1)
+    #     DatasetDict({
+    #         'train': dataset['train'].shuffle(seed=42).select(range(int(0.9 * len(dataset['train'])))),  # 90% for training
+    #         'test': dataset['train'].shuffle(seed=42).select(range(int(0.9 * len(dataset['train'])), len(dataset['train'])))  # remaining 10% for testing
+    #     })
+    #     assert 'validation' in dataset
 
     if training_task == "supervised-fine-tuning":
         if dataset_identifier in ['cyber', 'pile']:

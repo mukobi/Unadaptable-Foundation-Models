@@ -73,11 +73,13 @@ def get_fashion_mnist_data(
 
 def get_hf_data(
     dataset_identifier: str,  # Dataset name and subset name
+    seed: int = 42,
     # batch_size: int = 128, 
     # test_batch_size: int = 100,
 ) -> huggingface_datasets.Dataset:
     """
-    Retrieves a DataLoader object for a given dataset identifier.
+    Retrieves a DatasetDict object with splits 'train' and 'validation' for a given dataset identifier.
+    Creates 'validation' split if it does not exist.
 
     Args:
         dataset_identifier (str): The identifier for the dataset. Supported identifiers are:
@@ -85,7 +87,7 @@ def get_hf_data(
             - "harmfulqa" for the 'declare-lab/HarmfulQA' dataset.
             - "toxic" for the 'allenai/real-toxicity-prompts' dataset.
             - "pile" for the 'NeelNanda/pile-10k' dataset.
-        batch_size (int, optional): The batch size for the DataLoader. Defaults to 128.
+        seed (int, optional): The seed for shuffling the dataset. Defaults to 42.
 
     Returns:
         torch.utils.data.DataLoader: A DataLoader object containing the specified dataset.
@@ -125,7 +127,16 @@ def get_hf_data(
             'Contact owen-yeung if you would like a new dataset supported.'
         )
 
-    dataset = huggingface_datasets.load_dataset(dataset_name, subset_name)
+    dataset = huggingface_datasets.load_dataset(dataset_name, subset_name)[split].shuffle(seed=seed)
+
+    if 'validation' not in dataset:
+        # dataset = dataset.train_test_split(test_size=0.1)
+        dataset = huggingface_datasets.DatasetDict({
+            'train': dataset.select(range(int(0.9 * len(dataset)))),  # 90% for training
+            'validation': dataset.select(range(int(0.9 * len(dataset)), len(dataset)))  # remaining 10% for testing
+        })
+        # assert 'validation' in dataset
+        # assert 'train' in dataset
 
     # data_loader = torch.utils.data.DataLoader(
     #     dataset,
