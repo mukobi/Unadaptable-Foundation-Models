@@ -99,8 +99,8 @@ def run_fine_tune(
         training_args = TrainingArguments(
             output_dir=output_dir,
             # report_to="wandb", by default it reports to all connected loggers
-            evaluation_strategy="steps",
-            eval_steps="10",
+            # evaluation_strategy="steps",
+            # eval_steps=10,
         )
 
         # training_args with relevant config
@@ -117,7 +117,7 @@ def run_fine_tune(
 
         trainer = Trainer(
             model=model,
-            training_args=training_args,
+            args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             tokenizer=tokenizer,
