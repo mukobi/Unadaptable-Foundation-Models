@@ -20,8 +20,9 @@ logger = logging.getLogger()
 FINETUNE_DATASETS = [
     "cyber",
     "pile",
-    "harmfulqa",
-    "toxic",
+    # NOT YET SUPPORTED, needs preprocessing
+    # "harmfulqa", 
+    # "toxic",
 ]
 
 
@@ -33,7 +34,7 @@ def validate_finetune_cfg(cfg: "DictConfig") -> "DictConfig":
     if "dataset" not in cfg:
         raise ValidationError("Missing 'dataset' in finetuning config")
 
-    dataset = cfg["dataset"]
+    # dataset = cfg["dataset"]
     if cfg["dataset"] not in FINETUNE_DATASETS:
         raise ValidationError(
             f"Finetune dataset must be one of {FINETUNE_DATASETS}"
@@ -46,8 +47,7 @@ def run_fine_tune(
     # model_unadapted: HuggingFaceModel,
     model_unadapted,
     config: "DictConfig",
-    training_task: str = "supervised-fine-tuning",
-    output_dir: str = "./fine_tune_outputs",
+    # training_task: str = "supervised-fine-tuning",
 ):
     """
     Fine tunes model_unadapted on the dataset specified in config
@@ -82,13 +82,20 @@ def run_fine_tune(
     #     })
     #     assert 'validation' in dataset
 
-    if training_task == "supervised-fine-tuning":
+    if config.training_task == "supervised-fine-tuning":
         if dataset_identifier in ['cyber', 'pile']:
             column_name = 'text'
+        else :
+            raise NotImplementedError(
+                f"Only text datasets are supported for now. Got {dataset_identifier} instead."
+            )
 
         def tokenize_function(examples):
             # TODO check if padding and truncation are correct
-            return tokenizer(examples[column_name], padding="max_length", truncation=True)
+            return tokenizer(
+                examples[column_name], 
+                padding="max_length", truncation=True
+                )
 
         tokenized_datasets = dataset.map(tokenize_function, batched=True)
 
@@ -97,7 +104,7 @@ def run_fine_tune(
 
         # TODO training_args should take in relevant config
         training_args = TrainingArguments(
-            output_dir=output_dir,
+            output_dir=config.output_dir,
             # report_to="wandb", by default it reports to all connected loggers
             # evaluation_strategy="steps",
             # eval_steps=10,
@@ -133,5 +140,5 @@ def run_fine_tune(
 
     else:
         raise NotImplementedError(
-            f"Only supervised-fine-tuning fine-tuning is supported for now. Got {training_task} instead."
+            f"Only supervised-fine-tuning fine-tuning is supported for now. Got {config.training_task} instead."
         )

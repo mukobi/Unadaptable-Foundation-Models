@@ -8,6 +8,8 @@ dataset: cyber
 #             - "harmfulqa" for the 'declare-lab/HarmfulQA' dataset.
 #             - "toxic" for the 'allenai/real-toxicity-prompts' dataset.
 #             - "pile" for the 'NeelNanda/pile-10k' dataset.
+output_dir: "./cyber_fine_tune_outputs"
+training_task: "supervised-fine-tuning"
 epochs: 
 lr: 
 batch_size: 
