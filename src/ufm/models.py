@@ -38,6 +38,9 @@ class HuggingFaceModel:
             model_name = f"/data/public_models/huggingface/{model_name}"
             logger.info(f"Using existing model on CAIS cluter: {model_name}")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        if self.tokenizer.pad_token == None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+
         self.model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto")
         self.device = device
     

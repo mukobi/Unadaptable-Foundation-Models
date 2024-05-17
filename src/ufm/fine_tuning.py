@@ -97,6 +97,11 @@ def run_fine_tune(
                 padding="max_length", truncation=True
                 )
 
+        # PADDING for Llama is weird
+        # if tokenizer.pad_token == None:
+        #     tokenizer.pad_token = tokenizer.eos_token
+
+
         tokenized_datasets = dataset.map(tokenize_function, batched=True)
 
         train_dataset = tokenized_datasets["train"].shuffle(seed=42)
@@ -104,7 +109,9 @@ def run_fine_tune(
 
         # TODO training_args should take in relevant config
         training_args = TrainingArguments(
-            output_dir=config.output_dir,
+            output_dir="",
+            num_train_epochs=config.epochs,
+            save_strategy="no",
             # report_to="wandb", by default it reports to all connected loggers
             # evaluation_strategy="steps",
             # eval_steps=10,
