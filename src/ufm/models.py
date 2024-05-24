@@ -1,13 +1,13 @@
-import os
 import logging
+import os
 from typing import List
-import torch
+
 from torch import nn
 from torch.nn import functional as F
-
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 logger = logging.getLogger()
+
 
 class MLPNet(nn.Module):
     """N-layer MLP model with dropout."""
@@ -30,6 +30,7 @@ class MLPNet(nn.Module):
         x = self.layers(x)
         return F.log_softmax(x, dim=1)
 
+
 class HuggingFaceModel:
 
     def __init__(self, model_name: str = "HuggingFaceH4/zephyr-7b-beta", device="cuda") -> None:
@@ -38,18 +39,19 @@ class HuggingFaceModel:
             model_name = f"/data/public_models/huggingface/{model_name}"
             logger.info(f"Using existing model on CAIS cluter: {model_name}")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        if self.tokenizer.pad_token == None:
+        if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
         self.model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto")
         self.device = device
-    
+
     def __call__(self, x: str | List[str] | List[List[str]]):
         x = self.tokenizer(x, return_tensors="pt").to(self.device)
         return self.model(**x).logits
-    
+
     def detokenize(self, x) -> List[str]:
         return self.tokenizer.batch_decode(x)
+
 
 def load_model(model_name: str, device="cuda"):
     if model_name.lower() == "mlp":

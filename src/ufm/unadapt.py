@@ -72,6 +72,7 @@ def compute_loss(model, ref_model, data, target, unadapt_config):
     else:
         raise NotImplementedError
 
+
 ##### MODELS #####
 
 def apply_pruning(model, prune_percentage):
@@ -95,6 +96,7 @@ def apply_weight_rescaling(model, rescale_factor):
         linear_layers[i + 1].weight.data /= rescale_factor
 
     return model
+
 
 def apply_zeroth_order_learning(model, unadapt_config, device, train_loader):
     """Trains unadapt model using zeroth order learning on a given loss function."""

@@ -131,10 +131,12 @@ def get_hf_data(
 
     if 'validation' not in dataset:
         # dataset = dataset.train_test_split(test_size=0.1)
-        dataset = huggingface_datasets.DatasetDict({
-            'train': dataset.select(range(int(0.9 * len(dataset)))),  # 90% for training
-            'validation': dataset.select(range(int(0.9 * len(dataset)), len(dataset)))  # remaining 10% for testing
-        })
+        dataset = huggingface_datasets.DatasetDict(
+            {
+                'train': dataset.select(range(int(0.9 * len(dataset)))),  # 90% for training
+                'validation': dataset.select(range(int(0.9 * len(dataset)), len(dataset)))  # remaining 10% for testing
+            }
+        )
         # assert 'validation' in dataset
         # assert 'train' in dataset
 

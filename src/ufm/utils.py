@@ -1,14 +1,13 @@
 import logging
+import os
 import random
 
 import numpy as np
 import torch
 from omegaconf import DictConfig, OmegaConf
 from omegaconf.errors import ValidationError
-import os
 from torch.nn import functional as F
 from torch.optim.lr_scheduler import StepLR
-import wandb
 
 import ufm.data as udata
 import ufm.models as umodels
@@ -60,8 +59,8 @@ def get_model(model_name: str, device="cuda"):
     else:
         raise NotImplementedError
     return model
-  
- 
+
+
 def get_dataset(dataset_name: str, batch_size: int = 64, test_batch_size: int = 1000):
     if dataset_name.lower() == "mnist":
         return udata.get_mnist_data(batch_size, test_batch_size)
@@ -129,8 +128,10 @@ def test(model, device, test_loader):
 
     return test_loss, correct / len(test_loader.dataset)
 
+
 def get_base_finetune_eval_loss_path(results_path: str, model_name: str) -> str:
     return f"{results_path}/{model_name}/finetune_eval_loss.csv"
+
 
 def get_base_benchmark_path(results_path: str, model_name: str, model_stage: str) -> str:
     """
@@ -142,11 +143,14 @@ def get_base_benchmark_path(results_path: str, model_name: str, model_stage: str
     """
     return f"{results_path}/{model_name}/{model_stage}_benchmark.csv"
 
-def check_base_results_saved(baseline_metrics_path, model_name: str,) -> bool:
+
+def check_base_results_saved(baseline_metrics_path, model_name: str, ) -> bool:
     finetune_loss_exist = os.path.exists(get_base_finetune_eval_loss_path(model_name, baseline_metrics_path))
-    pretrained_benchmark_exist = os.path.exists(get_base_benchmark_path(model_name, baseline_metrics_path, "pretrained"))
+    pretrained_benchmark_exist = os.path.exists(
+        get_base_benchmark_path(model_name, baseline_metrics_path, "pretrained")
+    )
     finetuned_benchmark_exist = os.path.exists(get_base_benchmark_path(model_name, baseline_metrics_path, "finetuned"))
-    
+
     # return finetune_loss_exist and pretrained_benchmark_exist and finetuned_benchmark_exist
     # until run_benchmark is implemented 
     return finetune_loss_exist

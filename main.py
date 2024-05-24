@@ -7,7 +7,6 @@ import hydra
 import wandb
 from omegaconf import DictConfig, OmegaConf
 
-
 from ufm import countermeasures, fine_tuning, metrics, models, unadapt, utils
 
 
@@ -112,12 +111,10 @@ def main(cfg: DictConfig):
     # Check for base model metrics already saved unless unadapt method is blank
     base_metrics_saved = utils.check_base_results_saved(wandb.config.baseline_metrics_path, wandb.config.model)
 
-
     if not base_metrics_saved and not wandb.config.run_baseline:
         msg = "Base model metrics not found. Please first run baseline by setting run_baseline to True."
         logger.error(msg)
         raise ValueError(msg)
-
 
     if base_metrics_saved and wandb.config.run_baseline:
         msg = "Base model metrics already saved. Please set run_baseline to False."

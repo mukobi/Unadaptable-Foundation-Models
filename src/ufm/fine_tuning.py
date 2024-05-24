@@ -3,16 +3,14 @@ Scripts for fine-tuning on the harmful datasets
 """
 
 import logging
-from logging import Logger
-# from models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
-from typing import TYPE_CHECKING
 
+from omegaconf import DictConfig
 from omegaconf.errors import ValidationError
 from transformers import Trainer, TrainingArguments
 
 from ufm.data import get_hf_data
 
-from omegaconf import DictConfig
+# from models import HuggingFaceModel  # HF model is a wrapper with model AND tokenizer
 
 logger = logging.getLogger()
 
@@ -85,7 +83,7 @@ def run_fine_tune(
     if config.training_task == "supervised-fine-tuning":
         if dataset_identifier in ['cyber', 'pile']:
             column_name = 'text'
-        else :
+        else:
             raise NotImplementedError(
                 f"Only text datasets are supported for now. Got {dataset_identifier} instead."
             )
@@ -93,14 +91,13 @@ def run_fine_tune(
         def tokenize_function(examples):
             # TODO check if padding and truncation are correct
             return tokenizer(
-                examples[column_name], 
+                examples[column_name],
                 padding="max_length", truncation=True
-                )
+            )
 
         # PADDING for Llama is weird
-        # if tokenizer.pad_token == None:
+        # if tokenizer.pad_token is None:
         #     tokenizer.pad_token = tokenizer.eos_token
-
 
         tokenized_datasets = dataset.map(tokenize_function, batched=True)
 
