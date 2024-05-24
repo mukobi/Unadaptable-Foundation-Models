@@ -4,7 +4,7 @@ import copy
 import torch
 from omegaconf import DictConfig
 from torch import nn, optim
-from torch.func import functional_call, grad, hessian, jvp
+from torch.func import functional_call, grad, jvp
 from torch.nn import functional as F
 from torch.nn.utils import prune
 from tqdm import tqdm
@@ -57,51 +57,51 @@ def functional_loss_over_params(model, data, target):
 
 
 def compute_fim_loss(model, ref_model, data, target, lam, fim_reduce):
+    """Sum of KL divergence loss between UFM and frozen reference model
+    and Fisher Information Matrix (FIM) loss.
+
+    Args:
+        model (nn.Module): UFM model
+        ref_model (nn.Module): Reference model
+        data (torch.Tensor): Input data
+        target (torch.Tensor): Target labels
+        lam (float): Weight of FIM loss
+        fim_reduce (str): Reduction to use for FIM loss. Options: 'trace_sum', 'trace_max'
+    """
     output = model(data)
     ref_output = ref_model(data)
     kl_loss = torch.kl_div(output, ref_output.detach(), log_target=True).mean()
     params = dict(model.named_parameters())
     param_grad = grad(functional_loss_over_params(model, data, target))(params)
-    fim_trace = {k: v ** 2 for k, v in param_grad.items()}
+    if fim_reduce == "trace_sum":
+        fim_trace = {k: v ** 2 for k, v in param_grad.items()}
+        fim = sum(map(torch.sum, fim_trace.values())) / len(fim_trace)
     if fim_reduce == "trace_max":
+        fim_trace = {k: v ** 2 for k, v in param_grad.items()}
         fim = sum(map(torch.max, fim_trace.values())) / len(fim_trace)
+    else:
+        raise NotImplementedError
     loss = kl_loss + lam * fim
     return loss
 
 
-def compute_hessian_loss(model, ref_model, data, target, lam, hessian_reduce="fro"):
-    output = model(data)
-    ref_output = ref_model(data)
-    kl_loss = torch.kl_div(output, ref_output.detach(), log_target=True).mean()
-    params = dict(model.named_parameters())
-    hess = hessian(functional_loss_over_params(model, data, target))(params)
-    if hessian_reduce == "fro":
-        hess = sum(map(torch.linalg.norm, hess)) / len(hess)
-    elif hessian_reduce == "trace":
-        hess = sum(map(torch.vmap(torch.trace), hess)) / len(hess)
-    hess_loss = kl_loss - lam * hess
-    return hess_loss
-
-
-def compute_loss(model, ref_model, data, target, unadapt_config: dict):
-    lam = unadapt_config['lam']
-    if unadapt_config['loss'] == "hessian":
-        return compute_hessian_loss(
-            model, ref_model, data, target, lam, unadapt_config['reduce']
-        )
-    elif unadapt_config['loss'] == "fim":
+def compute_loss(model, ref_model, data, target, unadapt_config):
+    """Generic method to compute UFM loss for learning-based unadapt methods."""
+    if unadapt_config.loss == "fim":
         return compute_fim_loss(
-            model, ref_model, data, target, lam, unadapt_config['reduce']
+            model, ref_model, data, target, unadapt_config['lam'], unadapt_config['reduce']
         )
     else:
         raise NotImplementedError
 
 
 def apply_zeroth_order_learning(model, unadapt_config, device, train_loader):
+    """Trains unadapt model using zeroth order learning on a given loss function."""
     return model
 
 
 def apply_gradient_learning(model, unadapt_config: dict, device, train_loader):
+    """Trains unadapt model using gradient descent on a given loss function."""
     lam = unadapt_config['lam']
     lr = unadapt_config['lr']
     num_epochs = unadapt_config['epochs']

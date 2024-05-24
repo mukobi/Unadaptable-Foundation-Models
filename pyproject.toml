@@ -7,7 +7,11 @@ name = "ufm"
 readme = "README.md"
 version = "0.0.1"
 license = {file = "LICENSE"}
-authors = [{name = "Michael Walters"}, {name = "Gabriel Mukobi"},  {name = "Shinnosuke Uesaka"},  {name = "Owen Yeung"}] # Please add your name from SPAR
+# Please add your name from SPAR
+authors = [
+    {name = "Michael Walters"}, {name = "Gabriel Mukobi"},  {name = "Shinnosuke Uesaka"},
+    {name = "Owen Yeung"}, {name = "Rohan Potdar"}
+]
 description = "Unadaptable Foundation Models evaluations and benchmarking."
 dependencies = [
     "datasets",  # huggingface

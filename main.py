@@ -43,8 +43,6 @@ def run_baseline_suite():
     logger.info(f"Final loss gap ratio: {loss_gap_ratio:.6f}")
     logger.info("Finished Baseline suite")
 
-    return
-
 
 def run_unadapt_suite():
     """
@@ -84,8 +82,6 @@ def run_unadapt_suite():
 
     logger.info(f"Final loss gap ratio: {loss_gap_ratio:.6f}")
     logger.info("Finished Unadaptability suite")
-
-    return
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="base_config")
