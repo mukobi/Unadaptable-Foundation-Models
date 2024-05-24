@@ -83,8 +83,6 @@ def run_unadapt_suite():
     logger.info(f"Final loss gap ratio: {loss_gap_ratio:.6f}")
     logger.info("Finished Unadaptability suite")
 
-    return
-
 
 @hydra.main(version_base=None, config_path="configs", config_name="base_config")
 def main(cfg: DictConfig):
@@ -116,13 +114,15 @@ def main(cfg: DictConfig):
 
 
     if not base_metrics_saved and not wandb.config.run_baseline:
-        logger.error("Base model metrics not found. Please first run baseline by setting run_baseline to True.")
-        raise ValueError("Base model metrics not found. Please first run baseline by setting run_baseline to True.")
+        msg = "Base model metrics not found. Please first run baseline by setting run_baseline to True."
+        logger.error(msg)
+        raise ValueError(msg)
 
 
     if base_metrics_saved and wandb.config.run_baseline:
-        logger.error("Base model metrics already saved. Please set run_baseline to False.")
-        raise ValueError("Base model metrics already saved. Please set run_baseline to False.")
+        msg = "Base model metrics already saved. Please set run_baseline to False."
+        logger.error(msg)
+        raise ValueError(msg)
 
     if wandb.config.run_baseline:
         run_baseline_suite()

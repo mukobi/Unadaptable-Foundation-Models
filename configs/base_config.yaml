@@ -7,5 +7,5 @@ verbosity: 1  # [0, 1, 2] of increasing verbosity
 disable_wandb: false  # Disable WandB online integration
 model: EleutherAI/pythia-14m
 baseline_metrics_path: baseline # Path to save metrics
-run_baseline: true # If True, calculates metric on the base model. If False, applies unadapt and calculate metric on anadapt model
-testinit: False
+run_baseline: true # If True, calculates metric on the base model. If False, applies unadapt and calculate metric on unadapt model
+testinit: false

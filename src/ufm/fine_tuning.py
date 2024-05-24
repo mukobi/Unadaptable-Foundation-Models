@@ -12,8 +12,7 @@ from transformers import Trainer, TrainingArguments
 
 from ufm.data import get_hf_data
 
-if TYPE_CHECKING:
-    from omegaconf import DictConfig
+from omegaconf import DictConfig
 
 logger = logging.getLogger()
 
@@ -26,7 +25,7 @@ FINETUNE_DATASETS = [
 ]
 
 
-def validate_finetune_cfg(cfg: "DictConfig") -> "DictConfig":
+def validate_finetune_cfg(cfg: DictConfig) -> DictConfig:
     """
     Validate config for finetuning
     """
@@ -46,7 +45,7 @@ def validate_finetune_cfg(cfg: "DictConfig") -> "DictConfig":
 def run_fine_tune(
     # model_unadapted: HuggingFaceModel,
     model_unadapted,
-    config: "DictConfig",
+    config: dict,
     # training_task: str = "supervised-fine-tuning",
 ):
     """
@@ -57,17 +56,18 @@ def run_fine_tune(
 
     'config' is specifically the 'finetune' struct of global config
     """
+    config = DictConfig(config)
     # Validate
     config = validate_finetune_cfg(config)
 
     # column_name = config['column']
-    dataset_identifier = config['dataset']
+    dataset_identifier = config.dataset
 
     tokenizer = model_unadapted.tokenizer
     model = model_unadapted.model
 
     # Load dataset
-    logger.info(f"Loading dataset {config['dataset']} ...")
+    logger.info(f"Loading dataset {config.dataset} ...")
     dataset = get_hf_data(dataset_identifier)  # TODO batch size config etc
 
     # assert train splits exist
@@ -107,11 +107,15 @@ def run_fine_tune(
         train_dataset = tokenized_datasets["train"].shuffle(seed=42)
         eval_dataset = tokenized_datasets["validation"].shuffle(seed=42)
 
-        # TODO training_args should take in relevant config
+        # See here for more info on the different params
+        # https://huggingface.co/transformers/v3.0.2/main_classes/trainer.html#trainingarguments
         training_args = TrainingArguments(
-            output_dir="",
+            output_dir="./",
             num_train_epochs=config.epochs,
-            save_strategy="no",
+            learning_rate=config.lr,
+            per_device_train_batch_size=config.train_batch_size,
+            per_device_eval_batch_size=config.test_batch_size,
+            save_strategy="no"
             # report_to="wandb", by default it reports to all connected loggers
             # evaluation_strategy="steps",
             # eval_steps=10,
@@ -147,5 +151,5 @@ def run_fine_tune(
 
     else:
         raise NotImplementedError(
-            f"Only supervised-fine-tuning fine-tuning is supported for now. Got {config.training_task} instead."
+            f"Only supervised-fine-tuning fine-tuning is supported for now. Got {config['training_task']} instead."
         )
