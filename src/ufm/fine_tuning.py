@@ -12,8 +12,7 @@ from transformers import Trainer, TrainingArguments
 
 from ufm.data import get_hf_data
 
-if TYPE_CHECKING:
-    from omegaconf import DictConfig
+from omegaconf import DictConfig
 
 logger = logging.getLogger()
 
@@ -26,7 +25,7 @@ FINETUNE_DATASETS = [
 ]
 
 
-def validate_finetune_cfg(cfg: dict) -> dict:
+def validate_finetune_cfg(cfg: DictConfig) -> DictConfig:
     """
     Validate config for finetuning
     """
@@ -57,17 +56,18 @@ def run_fine_tune(
 
     'config' is specifically the 'finetune' struct of global config
     """
+    config = DictConfig(config)
     # Validate
     config = validate_finetune_cfg(config)
 
     # column_name = config['column']
-    dataset_identifier = config['dataset']
+    dataset_identifier = config.dataset
 
     tokenizer = model_unadapted.tokenizer
     model = model_unadapted.model
 
     # Load dataset
-    logger.info(f"Loading dataset {config['dataset']} ...")
+    logger.info(f"Loading dataset {config.dataset} ...")
     dataset = get_hf_data(dataset_identifier)  # TODO batch size config etc
 
     # assert train splits exist
@@ -82,7 +82,7 @@ def run_fine_tune(
     #     })
     #     assert 'validation' in dataset
 
-    if config['training_task'] == "supervised-fine-tuning":
+    if config.training_task == "supervised-fine-tuning":
         if dataset_identifier in ['cyber', 'pile']:
             column_name = 'text'
         else :
@@ -111,10 +111,10 @@ def run_fine_tune(
         # https://huggingface.co/transformers/v3.0.2/main_classes/trainer.html#trainingarguments
         training_args = TrainingArguments(
             output_dir="./",
-            num_train_epochs=config['epochs'],
-            learning_rate=config['lr'],
-            per_device_train_batch_size=config['train_batch_size'],
-            per_device_eval_batch_size=config['test_batch_size'],
+            num_train_epochs=config.epochs,
+            learning_rate=config.lr,
+            per_device_train_batch_size=config.train_batch_size,
+            per_device_eval_batch_size=config.test_batch_size,
             save_strategy="no"
             # report_to="wandb", by default it reports to all connected loggers
             # evaluation_strategy="steps",

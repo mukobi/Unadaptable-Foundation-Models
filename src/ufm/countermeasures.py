@@ -1,5 +1,6 @@
 import logging
 
+from omegaconf import DictConfig
 import torch
 import torch.nn as nn
 
@@ -34,7 +35,7 @@ def run_countermeasures(model, config: dict):
         
     }
     """
-
+    config = DictConfig(config)
     if "countermeasures" not in config:
         logger.info("No countermeasures to apply")
         return model

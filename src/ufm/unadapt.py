@@ -13,39 +13,17 @@ from tqdm import tqdm
 def get_unadaptable_model(
     model: nn.Module, unadapt_config: dict, device, train_loader
 ) -> nn.Module:
-    if unadapt_config['method'] == "prune":
-        return apply_pruning(model, unadapt_config['prune_percentage'])
-    elif unadapt_config['method'] == "rescale":
-        return apply_weight_rescaling(model, unadapt_config['rescale_factor'])
-    elif unadapt_config['method'] == "zeroth":
+    unadapt_config = DictConfig(unadapt_config)
+    if unadapt_config.method == "prune":
+        return apply_pruning(model, unadapt_config.prune_percentage)
+    elif unadapt_config.method == "rescale":
+        return apply_weight_rescaling(model, unadapt_config.rescale_factor)
+    elif unadapt_config.method == "zeroth":
         return apply_zeroth_order_learning(model, unadapt_config, device, train_loader)
-    elif unadapt_config['method'] == "gradient":
+    elif unadapt_config.method == "gradient":
         return apply_gradient_learning(model, unadapt_config, device, train_loader)
     else:
         raise NotImplementedError
-
-
-def apply_pruning(model, prune_percentage):
-    """Pruning function: prune linear layers."""
-    parameters_to_prune = (
-        (layer, "weight") for layer in model.layers if isinstance(layer, nn.Linear)
-    )
-
-    for module, name in parameters_to_prune:
-        prune.l1_unstructured(module, name, amount=prune_percentage)
-
-    return model
-
-
-def apply_weight_rescaling(model, rescale_factor):
-    """For each pair of linear, scale the first by C and the second by 1/C."""
-    linear_layers = [layer for layer in model.layers if isinstance(layer, nn.Linear)]
-
-    for i in range(0, len(linear_layers) - 1, 2):
-        linear_layers[i].weight.data *= rescale_factor
-        linear_layers[i + 1].weight.data /= rescale_factor
-
-    return model
 
 
 def hvp(f, primals, tangents):
@@ -94,17 +72,39 @@ def compute_loss(model, ref_model, data, target, unadapt_config):
     else:
         raise NotImplementedError
 
+##### MODELS #####
+
+def apply_pruning(model, prune_percentage):
+    """Pruning function: prune linear layers."""
+    parameters_to_prune = (
+        (layer, "weight") for layer in model.layers if isinstance(layer, nn.Linear)
+    )
+
+    for module, name in parameters_to_prune:
+        prune.l1_unstructured(module, name, amount=prune_percentage)
+
+    return model
+
+
+def apply_weight_rescaling(model, rescale_factor):
+    """For each pair of linear, scale the first by C and the second by 1/C."""
+    linear_layers = [layer for layer in model.layers if isinstance(layer, nn.Linear)]
+
+    for i in range(0, len(linear_layers) - 1, 2):
+        linear_layers[i].weight.data *= rescale_factor
+        linear_layers[i + 1].weight.data /= rescale_factor
+
+    return model
 
 def apply_zeroth_order_learning(model, unadapt_config, device, train_loader):
     """Trains unadapt model using zeroth order learning on a given loss function."""
     return model
 
 
-def apply_gradient_learning(model, unadapt_config: dict, device, train_loader):
+def apply_gradient_learning(model, unadapt_config: DictConfig, device, train_loader):
     """Trains unadapt model using gradient descent on a given loss function."""
-    lam = unadapt_config['lam']
-    lr = unadapt_config['lr']
-    num_epochs = unadapt_config['epochs']
+    lr = unadapt_config.lr
+    num_epochs = unadapt_config.epochs
     ref_model = copy.deepcopy(model)
 
     optimizer = optim.AdamW(model.parameters(), lr=lr)
