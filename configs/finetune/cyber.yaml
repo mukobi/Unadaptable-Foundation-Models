@@ -10,7 +10,7 @@ dataset: cyber
 #             - "pile" for the 'NeelNanda/pile-10k' dataset.
 # output_dir: "./cyber_fine_tune_outputs"
 training_task: "supervised-fine-tuning"
-num_train_epochs: 
-lr: 
-batch_size: 
-test_batch_size: 
+epochs: 1
+lr: 0.1
+train_batch_size: 10
+test_batch_size: 10

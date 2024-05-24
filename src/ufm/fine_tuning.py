@@ -26,7 +26,7 @@ FINETUNE_DATASETS = [
 ]
 
 
-def validate_finetune_cfg(cfg: "DictConfig") -> "DictConfig":
+def validate_finetune_cfg(cfg: dict) -> dict:
     """
     Validate config for finetuning
     """
@@ -46,7 +46,7 @@ def validate_finetune_cfg(cfg: "DictConfig") -> "DictConfig":
 def run_fine_tune(
     # model_unadapted: HuggingFaceModel,
     model_unadapted,
-    config: "DictConfig",
+    config: dict,
     # training_task: str = "supervised-fine-tuning",
 ):
     """
@@ -82,7 +82,7 @@ def run_fine_tune(
     #     })
     #     assert 'validation' in dataset
 
-    if config.training_task == "supervised-fine-tuning":
+    if config['training_task'] == "supervised-fine-tuning":
         if dataset_identifier in ['cyber', 'pile']:
             column_name = 'text'
         else :
@@ -107,11 +107,15 @@ def run_fine_tune(
         train_dataset = tokenized_datasets["train"].shuffle(seed=42)
         eval_dataset = tokenized_datasets["validation"].shuffle(seed=42)
 
-        # TODO training_args should take in relevant config
+        # See here for more info on the different params
+        # https://huggingface.co/transformers/v3.0.2/main_classes/trainer.html#trainingarguments
         training_args = TrainingArguments(
-            output_dir="",
-            num_train_epochs=config.epochs,
-            save_strategy="no",
+            output_dir="./",
+            num_train_epochs=config['epochs'],
+            learning_rate=config['lr'],
+            per_device_train_batch_size=config['train_batch_size'],
+            per_device_eval_batch_size=config['test_batch_size'],
+            save_strategy="no"
             # report_to="wandb", by default it reports to all connected loggers
             # evaluation_strategy="steps",
             # eval_steps=10,
@@ -147,5 +151,5 @@ def run_fine_tune(
 
     else:
         raise NotImplementedError(
-            f"Only supervised-fine-tuning fine-tuning is supported for now. Got {config.training_task} instead."
+            f"Only supervised-fine-tuning fine-tuning is supported for now. Got {config['training_task']} instead."
         )

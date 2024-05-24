@@ -11,15 +11,15 @@ from tqdm import tqdm
 
 
 def get_unadaptable_model(
-    model: nn.Module, unadapt_config: DictConfig, device, train_loader
+    model: nn.Module, unadapt_config: dict, device, train_loader
 ) -> nn.Module:
-    if unadapt_config.method == "prune":
-        return apply_pruning(model, unadapt_config.prune_percentage)
-    elif unadapt_config.method == "rescale":
-        return apply_weight_rescaling(model, unadapt_config.rescale_factor)
-    elif unadapt_config.method == "zeroth":
+    if unadapt_config['method'] == "prune":
+        return apply_pruning(model, unadapt_config['prune_percentage'])
+    elif unadapt_config['method'] == "rescale":
+        return apply_weight_rescaling(model, unadapt_config['rescale_factor'])
+    elif unadapt_config['method'] == "zeroth":
         return apply_zeroth_order_learning(model, unadapt_config, device, train_loader)
-    elif unadapt_config.method == "gradient":
+    elif unadapt_config['method'] == "gradient":
         return apply_gradient_learning(model, unadapt_config, device, train_loader)
     else:
         raise NotImplementedError
@@ -83,15 +83,15 @@ def compute_hessian_loss(model, ref_model, data, target, lam, hessian_reduce="fr
     return hess_loss
 
 
-def compute_loss(model, ref_model, data, target, unadapt_config):
-    lam = unadapt_config.lam
-    if unadapt_config.loss == "hessian":
+def compute_loss(model, ref_model, data, target, unadapt_config: dict):
+    lam = unadapt_config['lam']
+    if unadapt_config['loss'] == "hessian":
         return compute_hessian_loss(
-            model, ref_model, data, target, lam, unadapt_config.reduce
+            model, ref_model, data, target, lam, unadapt_config['reduce']
         )
-    elif unadapt_config.loss == "fim":
+    elif unadapt_config['loss'] == "fim":
         return compute_fim_loss(
-            model, ref_model, data, target, lam, unadapt_config.reduce
+            model, ref_model, data, target, lam, unadapt_config['reduce']
         )
     else:
         raise NotImplementedError
@@ -101,10 +101,10 @@ def apply_zeroth_order_learning(model, unadapt_config, device, train_loader):
     return model
 
 
-def apply_gradient_learning(model, unadapt_config, device, train_loader):
-    lam = unadapt_config.lam
-    lr = unadapt_config.lr
-    num_epochs = unadapt_config.epochs
+def apply_gradient_learning(model, unadapt_config: dict, device, train_loader):
+    lam = unadapt_config['lam']
+    lr = unadapt_config['lr']
+    num_epochs = unadapt_config['epochs']
     ref_model = copy.deepcopy(model)
 
     optimizer = optim.AdamW(model.parameters(), lr=lr)
