@@ -64,9 +64,9 @@ def run_llm_fine_tune(
             raise ValueError(
                 f"If not UFMLanguageModel, tokenizer must be provided. Received {type(model)}."
             )
-        llm = model
+        nn_model = model
     elif isinstance(model, UFMLangaugeModel):
-        llm = model.model
+        nn_model = model.model
         tokenizer = model.tokenizer
     else:
         # Ambiguous
@@ -153,7 +153,7 @@ def run_llm_fine_tune(
         # )
 
         trainer = Trainer(
-            model=llm,
+            model=nn_model,
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
@@ -165,7 +165,7 @@ def run_llm_fine_tune(
         trainer.train()
 
         # eval_results = trainer.evaluate()
-        print(f"MW DEBUG -- {trainer.state.log_history}")
+        logger.debug(f"Training log history:\n{trainer.state.log_history}")
         # eval_loss = trainer.state.log_history['eval_loss']
 
         evals = {
