@@ -3,6 +3,7 @@ Metrics for evaluating unadaptability and relative pre-training performance
 """
 import csv
 import logging
+from typing import TYPE_CHECKING
 
 import lm_eval
 import numpy as np
@@ -10,7 +11,10 @@ import wandb
 
 from ufm.utils import get_base_benchmark_path, get_base_finetune_eval_loss_path
 
-logger = logging.getLogger()
+if TYPE_CHECKING:
+    from ufm.models import UFMLangaugeModel
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_loss_gap_ratio(losses_unadapt: list[float], losses_base: list[float]) -> float:
@@ -39,7 +43,8 @@ def calculate_unadaptability_metrics(
     Calculate the loss gap ratio.
     Load in the val losses stored from fine-tuning the base model. csv file.
     """
-    # TODO: Calculate relative pre-training/finetunting performance. Waiting for the implementation of run_benchmark
+    return 0.5
+    # TODO: Calculate relative pre-training/finetuning performance. Waiting for the implementation of run_benchmark
     # Load in the val losses that already stored from fine-tuning the base model on disk
 
     with open(get_base_finetune_eval_loss_path(baseline_metrics_path, model_name), "r") as f:
@@ -62,7 +67,7 @@ def calculate_unadaptability_metrics(
     return loss_gap_ratio
 
 
-def run_benchmark(model_unadapted, tag: str = None):
+def run_benchmark(model: "UFMLangaugeModel", tag: str = None):
     """
     [IN DEVELOPMENT]
     Runs Open LLM Leaderboard tasks on model and logs results to wandb.
@@ -86,7 +91,7 @@ def run_benchmark(model_unadapted, tag: str = None):
     logger.info("Running Open LLM Leaderboard tasks on model...")
 
     results = lm_eval.simple_evaluate(  # call simple_evaluate
-        model=model_unadapted,
+        model=model,
         tasks=["arc", "hellaswag", "mmlu", "truthfulqa", "winogrande", "gsm8k"],  # tasks from Open LLM leaderboard
         num_fewshot=0,
         task_manager=task_manager,

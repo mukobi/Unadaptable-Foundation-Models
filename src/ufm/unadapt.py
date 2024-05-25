@@ -1,5 +1,7 @@
 # Reference: https://jax.readthedocs.io/en/latest/notebooks/autodiff_cookbook.html
 import copy
+from abc import ABC, abstractmethod
+from typing import Any, Optional
 
 import torch
 from omegaconf import DictConfig
@@ -8,22 +10,6 @@ from torch.func import functional_call, grad, jvp
 from torch.nn import functional as F
 from torch.nn.utils import prune
 from tqdm import tqdm
-
-
-def get_unadaptable_model(
-    model: nn.Module, unadapt_config: dict, device, train_loader
-) -> nn.Module:
-    unadapt_config = DictConfig(unadapt_config)
-    if unadapt_config.method == "prune":
-        return apply_pruning(model, unadapt_config.prune_percentage)
-    elif unadapt_config.method == "rescale":
-        return apply_weight_rescaling(model, unadapt_config.rescale_factor)
-    elif unadapt_config.method == "zeroth":
-        return apply_zeroth_order_learning(model, unadapt_config, device, train_loader)
-    elif unadapt_config.method == "gradient":
-        return apply_gradient_learning(model, unadapt_config, device, train_loader)
-    else:
-        raise NotImplementedError
 
 
 def hvp(f, primals, tangents):
@@ -73,53 +59,116 @@ def compute_loss(model, ref_model, data, target, unadapt_config):
         raise NotImplementedError
 
 
-##### MODELS #####
+##### UNADAPT METHODS #####
 
-def apply_pruning(model, prune_percentage):
-    """Pruning function: prune linear layers."""
-    parameters_to_prune = (
-        (layer, "weight") for layer in model.layers if isinstance(layer, nn.Linear)
-    )
+class UnadaptMethod(ABC):
+    """
+    Base class for unadapt methods.
+    Methods do not return the model but modify it in place
+    """
 
-    for module, name in parameters_to_prune:
-        prune.l1_unstructured(module, name, amount=prune_percentage)
+    def __init__(self, config: DictConfig):
+        self.config = config
 
-    return model
-
-
-def apply_weight_rescaling(model, rescale_factor):
-    """For each pair of linear, scale the first by C and the second by 1/C."""
-    linear_layers = [layer for layer in model.layers if isinstance(layer, nn.Linear)]
-
-    for i in range(0, len(linear_layers) - 1, 2):
-        linear_layers[i].weight.data *= rescale_factor
-        linear_layers[i + 1].weight.data /= rescale_factor
-
-    return model
+    @abstractmethod
+    def __call__(
+        self,
+        model: nn.Module,
+        *args,
+        **kwargs,
+    ) -> None:
+        raise NotImplementedError
 
 
-def apply_zeroth_order_learning(model, unadapt_config, device, train_loader):
-    """Trains unadapt model using zeroth order learning on a given loss function."""
-    return model
+class PruneMethod(UnadaptMethod):
+    def __init__(self, config: DictConfig):
+        super().__init__(config)
+        self.prune_percentage = config.prune_percentage
+
+    def __call__(self, model: nn.Module, *args, **kwargs):
+        """Prune linear layers."""
+        parameters_to_prune = (
+            (layer, "weight") for layer in model.modules() if isinstance(layer, nn.Linear)
+        )
+
+        for module, name in parameters_to_prune:
+            prune.l1_unstructured(module, name, amount=self.prune_percentage)
+
+        # The pruning isn't made permanent until you remove the re-parametrization and apply masks
+        # GPT says this should be a separate loop from the one above
+        for module, name in parameters_to_prune:
+            prune.remove(module, name)
 
 
-def apply_gradient_learning(model, unadapt_config: DictConfig, device, train_loader):
-    """Trains unadapt model using gradient descent on a given loss function."""
-    lr = unadapt_config.lr
-    num_epochs = unadapt_config.epochs
-    ref_model = copy.deepcopy(model)
+class WeightRescaleMethod(UnadaptMethod):
+    def __init__(self, config: DictConfig):
+        super().__init__(config)
+        self.rescale_factor = config.rescale_factor
 
-    optimizer = optim.AdamW(model.parameters(), lr=lr)
-    model.train()
-    num_total_batches = len(train_loader) * num_epochs
-    progress_bar = tqdm(total=num_total_batches, position=0, leave=True)
-    for _ in range(1, num_epochs + 1):
-        for data, target in train_loader:
-            data, target = data.to(device), target.to(device)
-            optimizer.zero_grad()
-            loss = compute_loss(model, ref_model, data, target, unadapt_config)
-            loss.backward()
-            optimizer.step()
-            progress_bar.update()
-    progress_bar.close()
-    return model
+    def __call__(self, model: nn.Module, *args, **kwargs):
+        """Rescale weights of linear layers."""
+        linear_layers = [layer for layer in model.layers if isinstance(layer, nn.Linear)]
+
+        for i in range(0, len(linear_layers) - 1, 2):
+            linear_layers[i].weight.data *= self.rescale_factor
+            linear_layers[i + 1].weight.data /= self.rescale_factor
+
+
+class GradientMethod(UnadaptMethod):
+    def __call__(
+        self,
+        model: nn.Module,
+        device: Optional[str] = None,
+        train_loader: Any = None,
+        *args, **kwargs
+    ):
+        """Unadapt model using gradient descent on a given loss function."""
+        lr = self.config.lr
+        num_epochs = self.config.epochs
+        ref_model = copy.deepcopy(model)
+        device = self.config.get('device')
+
+        optimizer = optim.AdamW(model.parameters(), lr=lr)
+        model.train()
+        num_total_batches = len(train_loader) * num_epochs
+        progress_bar = tqdm(total=num_total_batches, position=0, leave=True)
+        for _ in range(1, num_epochs + 1):
+            for data, target in train_loader:
+                if device:
+                    data, target = data.to(device), target.to(device)
+                optimizer.zero_grad()
+                loss = compute_loss(model, ref_model, data, target, self.config)
+                loss.backward()
+                optimizer.step()
+                progress_bar.update()
+        progress_bar.close()
+
+
+class ZerothOrderMethod(UnadaptMethod):
+    def __call__(self, model: nn.Module, *args, **kwargs):
+        """Unadapt model using zeroth order learning."""
+        raise NotImplementedError
+
+
+UNADAPT_METHODS = {
+    "prune": PruneMethod,
+    "rescale": WeightRescaleMethod,
+    "zeroth": ZerothOrderMethod,
+    "gradient": GradientMethod,
+}
+
+
+def apply_unadapt_method(
+    model: nn.Module,
+    unadapt_config: dict,
+    device: Optional[str] = None,
+    train_loader: Optional[Any] = None
+):
+    """
+    Helper function for applying the unadapt method of choice.
+    Returns the unadapted model.
+    """
+    unadapt_config = DictConfig(unadapt_config)
+    unadapt_class = UNADAPT_METHODS[unadapt_config.method]
+    unadapt_method = unadapt_class(unadapt_config)
+    unadapt_method(model, device=device, train_loader=train_loader)

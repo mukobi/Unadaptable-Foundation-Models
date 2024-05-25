@@ -2,10 +2,12 @@
 defaults:
   - base_config
   # Notice the keywords below match config dirs
-  - unadapt: gradient
+  - unadapt: prune
   - /finetune/cyber
   - _self_
 
 # Base name identifying the run
 basename: pythia_baseline
 run_baseline: true 
+
+model: EleutherAI/pythia-14m

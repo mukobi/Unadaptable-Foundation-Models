@@ -12,7 +12,7 @@ from torch.optim.lr_scheduler import StepLR
 import ufm.data as udata
 import ufm.models as umodels
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 def validate_config(cfg: DictConfig) -> DictConfig:
@@ -51,14 +51,6 @@ def set_seed(seed: int) -> None:
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-
-
-def get_model(model_name: str, device="cuda"):
-    if model_name.lower() == "mlp":
-        model = umodels.MLPNet().to(device)
-    else:
-        raise NotImplementedError
-    return model
 
 
 def get_dataset(dataset_name: str, batch_size: int = 64, test_batch_size: int = 1000):

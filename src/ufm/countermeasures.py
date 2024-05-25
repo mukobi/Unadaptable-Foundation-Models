@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from omegaconf import DictConfig
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 class ResidualModule(nn.Module):
@@ -22,7 +22,7 @@ class ResidualModule(nn.Module):
         return x
 
 
-def run_countermeasures(model, config: dict):
+def run_countermeasures(model, config: dict) -> None:
     """
     run countermeasures on the model to make it easier to finetune
     expected config:
@@ -36,10 +36,6 @@ def run_countermeasures(model, config: dict):
     }
     """
     config = DictConfig(config)
-    if "countermeasures" not in config:
-        logger.info("No countermeasures to apply")
-        return model
-
     for countermeasure in config["countermeasures"]:
         # some of the countermeasures can not be applied together
 
@@ -55,5 +51,3 @@ def run_countermeasures(model, config: dict):
 
         else:
             raise ValueError(f"Unknown countermeasure type {countermeasure['type']}")
-
-    return model
