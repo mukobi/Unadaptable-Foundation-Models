@@ -5,6 +5,7 @@ Scripts for fine-tuning on the harmful datasets
 import logging
 from typing import Dict, Optional, Union
 
+import wandb
 from omegaconf import DictConfig
 from omegaconf.errors import ValidationError
 from torch import nn
@@ -39,6 +40,16 @@ def validate_finetune_cfg(cfg: DictConfig) -> DictConfig:
         raise ValidationError(
             f"Finetune dataset must be one of {FINETUNE_DATASETS}"
         )
+
+    # Validate the training args
+    args = cfg.training_args
+    if not args.report_to:
+        logger.warning("No reporting destination specified. Defaulting to wandb.")
+        cfg.trainin_args.report_to = "wandb"
+
+    if args.save_strategy == "no" or not args.save_strategy:
+        logger.warning("No model save strategy specified for finetuning.")
+        cfg.training_args.save_strategy = "no"
 
     return cfg
 
@@ -127,30 +138,9 @@ def run_llm_fine_tune(
         # See here for more info on the different params
         # https://huggingface.co/transformers/v3.0.2/main_classes/trainer.html#trainingarguments
         training_args = TrainingArguments(
-            output_dir="./",
-            num_train_epochs=config.epochs,
-            learning_rate=config.lr,
-            per_device_train_batch_size=config.train_batch_size,
-            per_device_eval_batch_size=config.test_batch_size,
-            save_strategy="no",
-            # label_names=["text"],
-            report_to="wandb",  # by default it reports to all connected loggers
-            evaluation_strategy="steps",
-            eval_steps=3,
-            max_steps=6,
+            output_dir=wandb.run.dir,  # Checkpoints etc to this run's dir
+            **config.training_args
         )
-
-        # training_args with relevant config
-        # training_args = TrainingArguments(w
-        #     output_dir="./results",
-        #     num_train_epochs=3,
-        #     per_device_train_batch_size=8,
-        #     per_device_eval_batch_size=8,
-        #     warmup_steps=500,
-        #     weight_decay=0.01,
-        #     logging_dir="./logs",
-        #     logging_steps=10,
-        # )
 
         trainer = Trainer(
             model=nn_model,
@@ -166,7 +156,6 @@ def run_llm_fine_tune(
 
         # eval_results = trainer.evaluate()
         logger.debug(f"Training log history:\n{trainer.state.log_history}")
-        # eval_loss = trainer.state.log_history['eval_loss']
 
         evals = {
             "eval_loss": [log['eval_loss'] for log in trainer.state.log_history if 'eval_loss' in log],

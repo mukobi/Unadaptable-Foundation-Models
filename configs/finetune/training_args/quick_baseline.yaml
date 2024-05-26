@@ -1,0 +1,25 @@
+# Default arguments to be passed into HuggingFace TrainingArguments for the Trainer
+# These are small defaults for quick testing
+# See https://huggingface.co/transformers/v3.0.2/main_classes/trainer.html#trainingarguments
+# Override these as needed in your finetune config
+report_to: "wandb"
+num_train_epochs: 1
+learning_rate: 0.1
+per_device_train_batch_size: 10
+per_device_eval_batch_size: 20
+
+evaluation_strategy: "steps"
+eval_steps: 2  # Eval every n steps
+max_steps: 8  # Override epochs with number of steps
+warmup_steps: 0
+gradient_accumulation_steps: 1  # Update gradients over n batches
+
+# For saving checkpoints
+# These checkpoints will be saved to the wandb run folder, which is synced to the cloud after the run
+# This is slow and uploads at least hundreds of MBs of data for small runs
+save_strategy: "no"  # Set to 'steps' or 'epochs' to enable
+#save_steps: 100  # Must be multiple of eval_steps
+#save_total_limit: 8
+#load_best_model_at_end: true
+#metric_for_best_model: "eval_loss"
+#greater_is_better: false
