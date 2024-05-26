@@ -7,7 +7,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from ufm import countermeasures, fine_tuning, metrics, models, unadapt, utils
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("main")
 
 
 def run_baseline_suite():

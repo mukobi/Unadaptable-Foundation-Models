@@ -1,6 +1,9 @@
 # Description: Example configuration file for finetuning a model with the Hugging Face Trainer
 # To demonstrate the necessary fields for the configuration file
 # For reference only
+defaults:
+  - training_args: quick_baseline
+  - _self_
 
 dataset: cyber
 # Supported identifiers are:
@@ -10,7 +13,21 @@ dataset: cyber
 #             - "pile" for the 'NeelNanda/pile-10k' dataset.
 # output_dir: "./cyber_fine_tune_outputs"
 training_task: "supervised-fine-tuning"
-epochs: 1
-lr: 0.1
-train_batch_size: 2
-test_batch_size: 1
+# Any training overrides
+training_args:
+  num_train_epochs: 1
+  learning_rate: 0.1
+  per_device_train_batch_size: 2
+  per_device_eval_batch_size: 2
+  eval_steps: 2
+  max_steps: 4
+  evaluation_strategy: "steps"
+  # For saving checkpoints
+  # These will be saved to the wandb run folder, which is synced to the cloud after the run
+  # This is slow and uploads at least hundreds of MBs of data for small runs
+  save_strategy: "no"
+  #  save_steps: 2
+  #  save_total_limit: 2
+  #  load_best_model_at_end: true
+  #  metric_for_best_model: "eval_loss"
+  #  greater_is_better: false
