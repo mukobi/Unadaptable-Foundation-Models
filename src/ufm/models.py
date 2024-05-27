@@ -1,17 +1,20 @@
 import logging
 import os
-from abc import ABC
-from typing import List, Union
+from abc import abstractmethod
+from typing import List, Tuple, Union
 
+from lm_eval.api.model import TemplateLM
+from lm_eval.models.huggingface import HFLM
 from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizerBase
 
 logger = logging.getLogger(__name__)
 
 
-class UFMLangaugeModel(ABC):
+class UFMLangaugeModel(TemplateLM):
     """
-    Internal language model.
+    Internal UFM language model.
+    Inherits the Eleuther TemplateLM class from lm_eval so that benchmarks and evals can be run.
     """
 
     def __init__(
@@ -24,10 +27,26 @@ class UFMLangaugeModel(ABC):
         self.tokenizer = tokenizer
         self.device = device
 
+        super().__init__()
 
-class HuggingFaceModel(UFMLangaugeModel):
+    #####
+    # Required methods for TemplateLM
+    @abstractmethod
+    def loglikelihood_rolling(
+        self, requests, disable_tqdm: bool = False
+    ) -> List[Tuple[float, bool]]:
+        return super().loglikelihood_rolling(requests, disable_tqdm)
+
+    @abstractmethod
+    def generate_until(self, requests, disable_tqdm: bool = False) -> List[str]:
+        return super().generate_until(requests, disable_tqdm)
+    #####
+
+
+class HuggingFaceModel(UFMLangaugeModel, HFLM):
     """
     Wrapper for HuggingFace model and tokenizer.
+    The HFLM inheritance covers the required methods from UFMLangaugeModel.
     """
 
     def __init__(self, model_name: str = "HuggingFaceH4/zephyr-7b-beta", device="cuda") -> None:
@@ -35,22 +54,41 @@ class HuggingFaceModel(UFMLangaugeModel):
         if os.path.exists(f"/data/public_models/huggingface/{model_name}"):
             model_name = f"/data/public_models/huggingface/{model_name}"
             logger.info(f"Using existing model on CAIS cluter: {model_name}")
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
+        # tokenizer = AutoTokenizer.from_pretrained(model_name)
+        # if tokenizer.pad_token is None:
+        #     tokenizer.pad_token = tokenizer.eos_token
 
-        model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto")
-        model.to(device)
+        if device in ['cpu', 'mps']:
+            # We have to initialize the model here so that we can change its type to float32
+            model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto")
+            model.to(device)
+            model = model.float()
+        else:
+            # Otherwise, we can use the HFLM model loading from name
+            model = model_name
 
-        super().__init__(model, tokenizer, device)
+        # This sets our model, tokenizer, and device attributes
+        HFLM.__init__(
+            self,
+            pretrained=model,
+            # tokenizer=tokenizer,
+            device=device,
+        )
 
-    def __call__(self, x: str | List[str] | List[List[str]]):
-        x = self.tokenizer(x, return_tensors="pt").to(self.device)
-        return self.model(**x).logits
+    # def __call__(self, x: str | List[str] | List[List[str]]):
+    #     x = self.tokenizer(x, return_tensors="pt").to(self.device)
+    #     return self.model(**x).logits
 
     def detokenize(self, x) -> List[str]:
         return self.tokenizer.batch_decode(x)
 
+    def loglikelihood_rolling(
+        self, requests, disable_tqdm: bool = False
+    ) -> List[Tuple[float, bool]]:
+        return super().loglikelihood_rolling(requests, disable_tqdm)
+
+    def generate_until(self, requests, disable_tqdm: bool = False) -> List[str]:
+        return super().generate_until(requests, disable_tqdm)
 
 #
 # class MLPNet(nn.Module):

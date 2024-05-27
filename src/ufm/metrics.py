@@ -5,9 +5,10 @@ import csv
 import logging
 from typing import TYPE_CHECKING
 
-import lm_eval
 import numpy as np
 import wandb
+from lm_eval import simple_evaluate, tasks
+from lm_eval.logging_utils import WandbLogger
 
 from ufm.utils import get_base_benchmark_path, get_base_finetune_eval_loss_path
 
@@ -69,39 +70,30 @@ def calculate_unadaptability_metrics(
 
 def run_benchmark(model: "UFMLangaugeModel", tag: str = None):
     """
-    [IN DEVELOPMENT]
     Runs Open LLM Leaderboard tasks on model and logs results to wandb.
-    wandb.config and countermeasures are not implemented yet (though they are called in the main.py skeleton)
-    This function has not been tested. Please contact owen-yeung if any bugs show up.
-
-    Note:
-    - make sure to login to wandb before running this function
     """
-    return
-    # TODO: Implement base functionality with lm_eval, forget about the other params for now
+    # There is some issue with CPU vs MPS
+    if wandb.config.device == "cpu":
+        raise RuntimeError(
+            "There is an issue with benchmarking on CPU! Use MPS or GPU instead."
+        )
 
     # indexes all tasks from the `lm_eval/tasks` subdirectory.
     # Alternatively, you can set `TaskManager(include_path="path/to/my/custom/task/configs")`
     # to include a set of tasks in a separate directory.
-    task_manager = lm_eval.tasks.TaskManager()
+    task_manager = tasks.TaskManager()
 
-    # Setting `task_manager` to the one above is optional and should generally be done
-    # if you want to include tasks from paths other than ones in `lm_eval/tasks`.
-    # `simple_evaluate` will instantiate its own task_manager if it is set to None here.
-    logger.info("Running Open LLM Leaderboard tasks on model...")
-
-    results = lm_eval.simple_evaluate(  # call simple_evaluate
+    results = simple_evaluate(
         model=model,
-        tasks=["arc", "hellaswag", "mmlu", "truthfulqa", "winogrande", "gsm8k"],  # tasks from Open LLM leaderboard
+        # tasks=["arc", "hellaswag", "mmlu", "truthfulqa", "winogrande", "gsm8k"],  # tasks from Open LLM leaderboard
+        tasks=["winogrande"],  # GPT suggests winogrande as the most lightweight
         num_fewshot=0,
         task_manager=task_manager,
-        # ...
+        limit=10,
     )
 
     logger.info("Logging results to wandb...")
-    wandb_logger = lm_eval.logging_utils.WandbLogger(
-        project="lm-eval-harness-integration", job_type="eval"
-    )  # or empty if wandb.init(...) already called before
+    wandb_logger = WandbLogger()
     wandb_logger.post_init(results)
     wandb_logger.log_eval_result()
     wandb_logger.log_eval_samples(results["samples"])  # if log_samples
