@@ -6,6 +6,7 @@ import logging
 from typing import Dict, Optional, Union
 
 import wandb
+from datasets import Dataset, DatasetDict
 from omegaconf import DictConfig
 from omegaconf.errors import ValidationError
 from torch import nn
@@ -54,10 +55,50 @@ def validate_finetune_cfg(cfg: DictConfig) -> DictConfig:
     return cfg
 
 
+def _supervised_fine_tune(
+    nn_model: Union["UFMLangaugeModel", "nn.Module"],
+    dataset: Union[DatasetDict, Dataset],
+    data_collator: DataCollatorForLanguageModeling,
+    config: DictConfig,
+) -> Dict[str, list]:
+    train_dataset = dataset["train"].shuffle(seed=wandb.config.seed)
+    eval_dataset = dataset["validation"].shuffle(seed=wandb.config.seed)
+
+    # See here for more info on the different params
+    # https://huggingface.co/transformers/v3.0.2/main_classes/trainer.html#trainingarguments
+    training_args = TrainingArguments(
+        output_dir=wandb.run.dir,  # Checkpoints etc to this run's dir
+        **config.training_args
+    )
+
+    trainer = Trainer(
+        model=nn_model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        # tokenizer=tokenizer,
+        data_collator=data_collator,
+    )
+
+    logger.info("Fine-tuning model...")
+    trainer.train()
+
+    # eval_results = trainer.evaluate()
+    logger.debug(f"Training log history:\n{trainer.state.log_history}")
+
+    evals = {
+        "eval_loss": [log['eval_loss'] for log in trainer.state.log_history if 'eval_loss' in log],
+        "step": [log['step'] for log in trainer.state.log_history if 'eval_loss' in log],
+        "epoch": [log['epoch'] for log in trainer.state.log_history if 'eval_loss' in log],
+    }
+    return evals
+
+
 def run_llm_fine_tune(
     model: Union["UFMLangaugeModel", "nn.Module"],
+    dataset: Union[DatasetDict, Dataset],
+    data_collator: DataCollatorForLanguageModeling,
     config: dict,
-    tokenizer: Optional[Union[PreTrainedTokenizerBase, AutoTokenizer]] = None,
 ) -> Dict[str, list]:
     """
     Finetunes a model on the dataset specified in config
@@ -67,102 +108,24 @@ def run_llm_fine_tune(
 
     :param model: UFMLanguageModel or nn.Module. If nn.Module, tokenizer must be provided
     :param config: DictConfig with finetuning config
-    :param tokenizer: Optional tokenizer. Required if model is nn.Module
+    :param dataset: Optional dataset. Otherwise, loaded from config
+    :param data_collator: Data collator
     :returns: dict of evals
     """
     if isinstance(model, nn.Module):
-        if tokenizer is None:
-            raise ValueError(
-                f"If not UFMLanguageModel, tokenizer must be provided. Received {type(model)}."
-            )
         nn_model = model
     elif isinstance(model, UFMLangaugeModel):
         nn_model = model.model
-        tokenizer = model.tokenizer
     else:
         # Ambiguous
         raise ValueError(f"Model must be either UFMLanguageModel or nn.Module. Received {type(model)}.")
 
-    config = DictConfig(config)
     # Validate
+    config = DictConfig(config)
     config = validate_finetune_cfg(config)
 
-    # column_name = config['column']
-    dataset_identifier = config.dataset
-
-    # Load dataset
-    logger.info(f"Loading dataset {config.dataset} ...")
-    dataset = get_hf_data(dataset_identifier)  # TODO batch size config etc
-
-    # assert train splits exist
-    assert 'train' in dataset
-
-    # # If no validation set create one
-    # if 'validation' not in dataset:
-    #     # dataset = dataset.train_test_split(test_size=0.1)
-    #     DatasetDict({
-    #         'train': dataset['train'].shuffle(seed=42).select(range(int(0.9 * len(dataset['train'])))),  # 90% for training
-    #         'test': dataset['train'].shuffle(seed=42).select(range(int(0.9 * len(dataset['train'])), len(dataset['train'])))  # remaining 10% for testing
-    #     })
-    #     assert 'validation' in dataset
-
     if config.training_task == "supervised-fine-tuning":
-        if dataset_identifier in ['cyber', 'pile']:
-            column_name = 'text'
-        else:
-            raise NotImplementedError(
-                f"Only text datasets are supported for now. Got {dataset_identifier} instead."
-            )
-
-        def tokenize_function(examples):
-            # TODO check if padding and truncation are correct
-            return tokenizer(
-                examples[column_name],
-                padding="max_length",
-                max_length=512,
-                truncation=True,
-                return_tensors='pt',
-            ).to('cpu')
-
-        # PADDING for Llama is weird
-        # if tokenizer.pad_token is None:
-        #     tokenizer.pad_token = tokenizer.eos_token
-        tokenized_datasets = dataset.map(tokenize_function, batched=True, remove_columns=column_name)
-        tokenized_datasets.set_format("torch")
-
-        train_dataset = tokenized_datasets["train"].shuffle(seed=42)
-        eval_dataset = tokenized_datasets["validation"].shuffle(seed=42)
-
-        data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
-
-        # See here for more info on the different params
-        # https://huggingface.co/transformers/v3.0.2/main_classes/trainer.html#trainingarguments
-        training_args = TrainingArguments(
-            output_dir=wandb.run.dir,  # Checkpoints etc to this run's dir
-            **config.training_args
-        )
-
-        trainer = Trainer(
-            model=nn_model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            # tokenizer=tokenizer,
-            data_collator=data_collator,
-        )
-
-        logger.info("Fine-tuning model...")
-        trainer.train()
-
-        # eval_results = trainer.evaluate()
-        logger.debug(f"Training log history:\n{trainer.state.log_history}")
-
-        evals = {
-            "eval_loss": [log['eval_loss'] for log in trainer.state.log_history if 'eval_loss' in log],
-            "step": [log['step'] for log in trainer.state.log_history if 'eval_loss' in log],
-            "epoch": [log['epoch'] for log in trainer.state.log_history if 'eval_loss' in log],
-        }
-        return evals
+        return _supervised_fine_tune(nn_model, dataset, data_collator, config)
 
     else:
         raise NotImplementedError(

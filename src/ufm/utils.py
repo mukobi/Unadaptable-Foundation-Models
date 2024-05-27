@@ -10,7 +10,6 @@ from torch.nn import functional as F
 from torch.optim.lr_scheduler import StepLR
 
 import ufm.data as udata
-import ufm.models as umodels
 
 logger = logging.getLogger(__name__)
 

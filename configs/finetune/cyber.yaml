@@ -22,12 +22,3 @@ training_args:
   eval_steps: 2
   max_steps: 4
   evaluation_strategy: "steps"
-  # For saving checkpoints
-  # These will be saved to the wandb run folder, which is synced to the cloud after the run
-  # This is slow and uploads at least hundreds of MBs of data for small runs
-  save_strategy: "no"
-  #  save_steps: 2
-  #  save_total_limit: 2
-  #  load_best_model_at_end: true
-  #  metric_for_best_model: "eval_loss"
-  #  greater_is_better: false
