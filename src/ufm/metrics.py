@@ -68,7 +68,7 @@ def calculate_unadaptability_metrics(
     return loss_gap_ratio
 
 
-def run_benchmark(model: "UFMLangaugeModel", tag: str = None):
+def run_benchmark(model: "UFMLangaugeModel", tag):
     """
     Runs Open LLM Leaderboard tasks on model and logs results to wandb.
     """
@@ -78,6 +78,8 @@ def run_benchmark(model: "UFMLangaugeModel", tag: str = None):
             "There is an issue with benchmarking on CPU! Use MPS or GPU instead."
         )
 
+    # TODO -- We need to find a way to identify this benchmark via the tag on wandb
+    # TODO -- Alternatively, we go for the csv saving method.
     # indexes all tasks from the `lm_eval/tasks` subdirectory.
     # Alternatively, you can set `TaskManager(include_path="path/to/my/custom/task/configs")`
     # to include a set of tasks in a separate directory.
@@ -90,6 +92,7 @@ def run_benchmark(model: "UFMLangaugeModel", tag: str = None):
         num_fewshot=0,
         task_manager=task_manager,
         limit=10,
+        device=wandb.config.device,
     )
 
     logger.info("Logging results to wandb...")
