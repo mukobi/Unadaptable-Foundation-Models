@@ -8,6 +8,7 @@ defaults:
 
 # Base name identifying the run
 basename: pythia_baseline
+project: pythia-14m
 run_baseline: true 
 
 model: EleutherAI/pythia-14m

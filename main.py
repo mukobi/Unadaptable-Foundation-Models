@@ -7,6 +7,7 @@ import wandb
 from omegaconf import DictConfig, OmegaConf
 
 from ufm import countermeasures, data, fine_tuning, metrics, models, unadapt, utils
+from constants import WANDB_PROJECT, VERSION
 
 if TYPE_CHECKING:
     from transformers import DataCollatorForLanguageModeling
@@ -124,8 +125,13 @@ def main(cfg: DictConfig):
     cfg = utils.validate_config(cfg)
 
     # Init Weights and Biases run
+    if "project" in cfg:
+        if cfg.project[-1].isalpha:
+            cfg.project = cfg.project + "-v" + VERSION
+
     wandb.init(
-        project="unadaptable-foundation-models",
+        project=cfg.get("project", WANDB_PROJECT),
+        entity="unadaptable-foundation-models",
         # Convert config to dict type
         config=OmegaConf.to_container(cfg, resolve=True),
         mode="disabled" if cfg.disable_wandb else "online",
