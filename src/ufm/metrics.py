@@ -93,6 +93,7 @@ def run_benchmark(model: "UFMLangaugeModel", tag):
         task_manager=task_manager,
         limit=10,
         device=wandb.config.device,
+        trust_remote_code=True,
     )
 
     logger.info("Logging results to wandb...")

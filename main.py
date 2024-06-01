@@ -170,6 +170,8 @@ def main(cfg: DictConfig):
         ufm_model, ft_dataset, ft_data_collator = run_baseline_suite()
 
     if wandb.config.unadapt:
+        # TODO -- f"MW We should actually not be passing these in
+        # The pretrained model should be reloaded from scratch
         run_unadapt_suite(
             ufm_model=ufm_model,
             ft_dataset=ft_dataset,
