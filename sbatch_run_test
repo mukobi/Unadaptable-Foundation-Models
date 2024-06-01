@@ -1,0 +1,15 @@
+#!/bin/bash
+#SBATCH --time=00:10:00  # time allocation, HH:MM:SS
+#SBATCH --nodes=1
+#SBATCH --gpus-per-node=2
+#SBATCH --partition=single
+#SBATCH --mem=1G  # memory per node; default is megabytes; Nvidia A100 has 80G; can use G for gigs etc
+#SBATCH --job-name=ufm_test  # job name for the allocation
+#SBATCH --output=logs/%x-%j.out
+
+# Run our UFM setup
+source ./setup.sh
+
+srun torchrun main.py --config-name=pythia_baseline device=cuda
+
+
