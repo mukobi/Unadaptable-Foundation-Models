@@ -93,7 +93,7 @@ def run_benchmark(model: "UFMLangaugeModel", tag):
         task_manager=task_manager,
         limit=10,
         device=wandb.config.device,
-        trust_remote_code=True,
+        # trust_remote_code=True,  # lm_eval says we should set this to true but it errors with it so : /
     )
 
     logger.info("Logging results to wandb...")
